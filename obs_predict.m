@@ -1,16 +1,18 @@
 
 clearvars
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Customize the model run by modifying the following parameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Define interval examined, slice sampler parameters
 plotFlag=1;
 cmipBackground=1;
-yrsSampled=(1:42)'; %Years to be sampled 
-leaveOneOut=1; %1 to leave out model run from prior dist, 0 otherwise
-drawPriors=0; %1 to calculate mle's of full glm from each CMIP6 run, 0 otherwise
+yrsObserved=(1:42)'; %Years in the dataset counted as observations 
 nsamples=10000;burn=1000;thin=5;%Number of draws; number of draws to first burn;thinning parameter
 iF=1; %inflation factor
 sigObs=0.6511.*iF; %std from estimate_obs_std4
 meanObs=-0.2681; %mean from estimate_obs_std4
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Define the model
 glm  = @(b,t) b(1).*(1-1./(1+exp(-b(2)*(t-b(3)))).^(1/b(4))); % SIA sigmoid
@@ -18,7 +20,7 @@ glm  = @(b,t) b(1).*(1-1./(1+exp(-b(2)*(t-b(3)))).^(1/b(4))); % SIA sigmoid
 %Observation values
 load sia_obs.mat
 y=squeeze(sum(sia_obs,[1 2],'omitnan'))./1e6;
-t=(1:42)';
+t=yrsObserved;
 tAll=(1:122)';
 
 %Draw Priors
@@ -70,7 +72,7 @@ if plotFlag
         
         % creating array of model values
         nRuns=79;
-        t = yrsSampled;
+        t = yrsObserved;
         tAll=(1:122)';
         ct = 1;
         y_full=zeros(length(t),nRuns);
