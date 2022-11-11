@@ -9,11 +9,11 @@ function [chainAll,y_full,runInfo]= posterior_estimate_cmip(saveStr)
 yrsSampled=(1:42)'; %Observations to be sampled 
 nRuns=79; %Number of runs to use
 leaveOneOut=1; %1 to leave out model run from prior dist, 0 otherwise
-drawPriors=0; %1 to calculate mle's of full glm from each CMIP6 run, 0 otherwise
+drawPriors=1; %1 to calculate mle's of full glm from each CMIP6 run, 0 otherwise
 nsamples=10000;burn=1000;thin=5;%Number of draws; number of draws to first burn;thinning parameter
 iF=1; %inflation factor
 chainAll=zeros(nsamples,4,nRuns);
-sigObs=0.5934.*iF; %std from estimate_obs_std4
+sigObs=0.6511.*iF; %std from estimate_obs_std4
 meanObs=-0.2681; %mean from estimate_obs_std4
 
 %Define the model
@@ -39,7 +39,7 @@ end
 if drawPriors
     [p1_priors,p2_priors,p3_priors,~]= sigmoid_params(A20);
 else
-    load model_full_priorsb_22_10_17.mat
+    load model_full_priorsb_22_11_10.mat
 end
 
 % storing most likely 1st round priors
@@ -48,10 +48,11 @@ mlp=zeros(nRuns,4);
 
 tElapsed=0;
 if ~leaveOneOut
-    p1=fitdist(p1_priors(:),'Lognormal');
-    p2=fitdist(p2_priors(:),'Lognormal');
+    p1=fitdist(p1_priors(:),'Normal');
+    p2=fitdist(p2_priors(:),'LogNormal');
     p3=fitdist(p3_priors(:),'Normal');
-    p4=fitdist(p4_priors(:),'Half Normal');
+    p4=fitdist(p4_priors(:),'Normal');
+    p4=truncate(p4,0,inf);
 end
 
 for ii = 1:nRuns
@@ -64,25 +65,26 @@ for ii = 1:nRuns
         p2p=p2_priors(:,incl);
         p3p=p3_priors(:,incl);
         p4p=p4_priors(:,incl);
-        p1=fitdist(p1p(:),'Lognormal');
-        p2=fitdist(p2p(:),'Lognormal');
+        p1=fitdist(p1p(:),'Normal');
+        p2=fitdist(p2p(:),'LogNormal');
         p3=fitdist(p3p(:),'Normal');
-        p4=fitdist(p4p(:),'Half Normal');       
+        p4=fitdist(p4p(:),'Normal');
+        p4=truncate(p4,0,inf);
     end
-    mu1=p1.mean;mu2=p2.mean;mu3=p3.mean;mu4=p4.mean;
-    sig1=p1.std;sig2=p2.std;sig3=p3.std;sig4=p4.std;
+    mu1=p1.mean;mu2=p2.mu;mu3=p3.mean;mu4=p4.mean;
+    sig1=p1.std;sig2=p2.sigma;sig3=p3.std;sig4=p4.std;
     
     %Get the fit over the full simulation for each CMIP run    
-    pr1=fitdist(p1_priors(:,ii),'Lognormal');
-    pr2=fitdist(p2_priors(:,ii),'Lognormal');
+    pr1=fitdist(p1_priors(:,ii),'Normal');
+    pr2=fitdist(p2_priors(:,ii),'LogNormal');
     pr3=fitdist(p3_priors(:,ii),'Normal');
-    pr4=fitdist(p4_priors(:,ii),'Half Normal');
+    pr4=fitdist(p4_priors(:,ii),'Normal');
     mlp(ii,:)=[pr1.mean pr2.mean pr3.mean pr4.mean];
     y_hat_full(:,ii) = glm(mlp(ii,:),tAll);
     % ====================================================================== %
     % set initial values, mean, sigma.
     %b10 - A_0          %b20  - alpha        %b30 - t0
-    init    = [mu1                mu2        mu3        mu4];
+    init    = [mu1                p2.mean    mu3        mu4];
     %mu1                %mu2                 %mu3
     mu      = [mu1                mu2        mu3        mu4];
     %sigma1             %sigma2              %sigma3

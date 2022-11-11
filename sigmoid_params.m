@@ -12,7 +12,7 @@ function [p1_priors,p2_priors,p3_priors,p4_priors,runInfo]= sigmoid_params(A20,s
     
     
     %Sampler parameters
-    sigObs = 0.4826; %From estimate_obs_std.m
+    sigObs = 0.6511; %From estimate_obs_std4.m
 
     %Number of draws; number of draws to first burn;thinning parameter 
     nsamples=10000;burn=1000;thin=5;    
@@ -35,9 +35,10 @@ function [p1_priors,p2_priors,p3_priors,p4_priors,runInfo]= sigmoid_params(A20,s
                   %mu1          %mu2           %mu3
         mu      = [6            0          70       0];
                   %sigma1       %sigma2        %sigma3  
-        sigma   = [10           0.5          70       10];
+        sigma   = [10           0.5          70       3];
 
         %Then, define the prior pdfs for the parameters
+        disttypes=["HalfNormal";"Normal";"HalfNormal";"Normal"];
         halfnormpdf2=makedist('HalfNormal','mu',mu(2),'sigma',sigma(2));
         halfnormpdf4=makedist('HalfNormal','mu',mu(4),'sigma',sigma(4));
         prior1= @(b1) normpdf(b1,mu(1),sigma(1));
@@ -73,7 +74,7 @@ function [p1_priors,p2_priors,p3_priors,p4_priors,runInfo]= sigmoid_params(A20,s
     end
     runInfo.init=init;runInfo.mu=mu;runInfo.sigma=sigma;
     runInfo.sigObs=sigObs;runInfo.nsamples=nsamples;runInfo.burn=burn;runInfo.thin=thin;
-    runInfo.glm=glm;
+    runInfo.glm=glm;runInfo.disttypes=disttypes;
     if nargin>1
         save(saveStr,'p1_priors','p2_priors','p3_priors','p4_priors','runInfo')
     end
