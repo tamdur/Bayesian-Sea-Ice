@@ -9,7 +9,7 @@ function [chainAll,y_full,runInfo]= posterior_estimate_cmip(saveStr)
 yrsSampled=(1:42)'; %Observations to be sampled 
 nRuns=79; %Number of runs to use
 leaveOneOut=1; %1 to leave out model run from prior dist, 0 otherwise
-drawPriors=1; %1 to calculate mle's of full glm from each CMIP6 run, 0 otherwise
+drawPriors=0; %1 to calculate mle's of full glm from each CMIP6 run, 0 otherwise
 nsamples=10000;burn=1000;thin=5;%Number of draws; number of draws to first burn;thinning parameter
 iF=1; %inflation factor
 chainAll=zeros(nsamples,4,nRuns);
@@ -20,7 +20,7 @@ meanObs=-0.2681; %mean from estimate_obs_std4
 glm  = @(b,t) b(1).*(1-1./(1+exp(-b(2)*(t-b(3)))).^(1/b(4))); % SIA sigmoid
 
 %Load CMIP6 model data
-load A20.mat
+load A20.mat;
 
 % creating array of model values
 t = yrsSampled;
@@ -37,9 +37,9 @@ for ct_mod = 1:size(A20,2)
 end
 
 if drawPriors
-    [p1_priors,p2_priors,p3_priors,~]= sigmoid_params(A20);
+    [p1_priors,p2_priors,p3_priors,p4_priors]= sigmoid_params(A20);
 else
-    load model_full_priorsb_22_11_10.mat
+    load model_full_priorsb_22_11_10.mat;
 end
 
 % storing most likely 1st round priors
@@ -114,7 +114,7 @@ runInfo.init=init;runInfo.mu=mu;runInfo.sigma=sigma;
 runInfo.sigObs=sigObs;runInfo.nsamples=nsamples;runInfo.burn=burn;runInfo.thin=thin;
 runInfo.glm=glm;runInfo.iF=iF;
 if nargin > 0
-    save(saveStr,'chainAll','y_hat_full','runInfo')
+    save(saveStr,'chainAll','y_hat_full','runInfo');
 end
 end
 

@@ -3,27 +3,36 @@
 % Ted Amdur and Charlotte Dyvik Henke
 % 11/10/22
 
-
+clearvars
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parameter settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Settings for initial plot showing observations and multi-model
 % uncertainty
-Fig1=1;
-
+Fig1=0;
+if Fig1
+saveStr='SIAFig2_22_11_11';
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Settings for plot using CMIP6 output
 Fig2=0; %Set to 1 to use cmip6 output, 0 otherwise
-modelrun=24; % Set to the index of the model run used
+modelrun=19; % Set to the index of the model run used
+if Fig2
+saveStr='SIAFig2_22_11_11';
+end
 if Fig2
     load model_predictions_22_11_10.mat %Select set of posterior predictions to run
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Settings for plot using actual observations
-Fig3=0; %Set to 1 to use actual remote sensing observations
+Fig3=1; %Set to 1 to use actual remote sensing observations
 newPred=0; %Set to 1 to use new prediction, 0 to load past prediction
+if Fig3
+saveStr='SIAFig3_22_11_11';
+load model_full_priorsb_22_11_10.mat %Priors to plot
+end
 if newPred
     %Set parameters for slicesampler
     nsamples=10000;burn=1000;thin=5;%Number of draws; number of draws to first burn;thinning parameter
@@ -31,13 +40,73 @@ if newPred
     [chain,~,yObs]=obs_predict(nsamples,burn,thin,saveStr);
 else
     load obs_pred_22_11_11.mat %Insert name of saved prediction one desires to use
+    glm=obsInfo.glm;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %Prepare data to be plotted
+yrObs=(1:42)'; %Years of observations to be used
 t = yrObs;
 tAll = (1:122)';
-yrObs=(1:42)'; %Years of observations to be used
+stYr=1978;
+
+%Script for Fig. 1
+if Fig1
+    load sia_obs.mat;
+    load A20.mat;
+    
+    y_obs = squeeze(sum(sia_obs, [1 2],'omitnan')./1e6);
+    ct = 1;
+    for ct_mod = 1:20
+        for ct_em = 1:size(A20(ct_mod).X,2)
+            y(:,ct) = A20(ct_mod).X(1:42,ct_em);
+            y2(:,ct) = A20(ct_mod).X(:,ct_em);
+            ct = ct+1;
+        end
+    end
+    % ======================================================================
+    % Get priors for each of the 79 realisations
+    load model_full_priorsb_22_11_10.mat
+    
+    
+    % storing 1st round priors, finding most frequent value
+    glm=runInfo.glm; %The functional form used by the MCMC model
+    for ct_79 = 1:79
+        %Get full fit
+        mle=[mean(p1_priors(:,ct_79)) mean(p2_priors(:,ct_79)) mean(p3_priors(:,ct_79)) mean(p4_priors(:,ct_79))];
+        y_full(:,ct_79) = glm(bfit,tAll);
+    end
+    siamodsprct=prctile(y_full',[2.5 50 97.5]);
+    
+    % creating index for first ensemble member for each model
+    for ct_mod = 1:20
+        em1(ct_mod) = size(A20(ct_mod).X,2);
+    end
+    em1= cumsum(em1);
+    
+    % plotting figure 1
+    figure; hold on;
+    plot(t+stYr,y_obs,'color',rgb('CornflowerBlue'),'LineWidth',1.3);%observations
+    plot(tAll+stYr,siamodsprct(2,:),'color',rgb('Crimson'),'LineWidth',1.3);%multimodel median
+    shade(tAll+stYr,siamodsprct(1,:),tAll+stYr,siamodsprct(3,:),'color',rgb('LightPink'),'FillType',[2 1]);
+    for ct =em1
+        plot(tAll+stYr,y2(:,ct),'color',[rgb('Black'),0.15]); %actual realisations
+        plot(tAll+stYr,y_full(:,ct),':','color',rgb('Black')); %logistic fits
+        yline(1,'--k');%threshold
+        %     plot(t2+stYr,siamodsprct(:,2),'color',rgb('Red'),'LineWidth',1.5);%model median again
+        axis tight;
+        xlabel('Year');
+        ylabel('Sea ice area [10^6 km^2]');
+        yline(1,'--k');
+    end
+    plot(t+stYr,y_obs,'color',rgb('CornflowerBlue'),'LineWidth',1.3);%observations again
+    plot(tAll+stYr,siamodsprct(2,:),'color',rgb('Crimson'),'LineWidth',1.3);%multimodel median again
+    legend('observations','multi-model median','','','multi-model 95% c.i.','simulations','logistic fits','sea-ice-free threshold');
+    
+    % saving the figures
+    % saving the figure
+    saveas(gcf,['plots/' saveStr],'png');
+end
+if Fig2 || Fig3
 if Fig2
     nRuns=79; %Number of CMIP6 model runs to be used
     glm=runInfo.glm; %The functional form used by the MCMC model
@@ -70,20 +139,20 @@ siaprctpred = prctile(ypred,[7 50 93])'; %Calculate percentiles
 figure2('Position',[10 10 800 1000])
 subplot(2,4,(5:8))
 %Shade the 95% CI prediction of logistic
-shade(tAll(42:end)+1978,siaprctpred(42:end,1),tAll(42:end)+1978,siaprctpred(42:end,3),'color',rgb('LightPink'),'FillType',[2 1]);
+shade(tAll(42:end)+stYr,siaprctpred(42:end,1),tAll(42:end)+stYr,siaprctpred(42:end,3),'color',rgb('LightPink'),'FillType',[2 1]);
 hold on
-shade(t+1978,siaprctpred(yrObs,1),t+1978,siaprctpred(yrObs,3),'color',rgb('Gray'),'FillType',[2 1]);
+shade(t+stYr,siaprctpred(yrObs,1),t+stYr,siaprctpred(yrObs,3),'color',rgb('Gray'),'FillType',[2 1]);
 hold on
 if Fig2
-    h(1)=plot(tAll+1978,y_full(:,modelrun),'k'); %the actual simulated values
+    h(1)=plot(tAll+stYr,y_full(:,modelrun),'k'); %the actual simulated values
 else
-    h(1)=plot(t+1978,y,'k');
+    h(1)=plot(t+stYr,yObs,'k');
 end
 hold on
-h(2)=plot(tAll+1978,siaprctpred(:,2),'color',rgb('HotPink')); %the 50th percentile of Bayesian fit
+h(2)=plot(tAll+stYr,siaprctpred(:,2),'color',rgb('HotPink')); %the 50th percentile of Bayesian fit
 hold on
 if Fig2
-    h(3)=plot(tAll+1978,y_fit,'color',rgb('RoyalBlue')); %full-time bayesian fit
+    h(3)=plot(tAll+stYr,y_fit,'color',rgb('RoyalBlue')); %full-time bayesian fit
 end
 yline(1,'--k');
 axis tight;
@@ -141,14 +210,14 @@ xlabel('alpha [units]');
 
 
 subplot(2,4,3); hold on;
-h1 = histogram(p3_priors+1978,'FaceColor',rgb('Grey'));%priors
+h1 = histogram(p3_priors+stYr,'FaceColor',rgb('Grey'));%priors
 h1.NumBins= nbins_pr;
 h1.Normalization = 'pdf';
-h2 = histogram(chain(:,3)+1978,'FaceColor',rgb('HotPink')); %posterior
+h2 = histogram(chain(:,3)+stYr,'FaceColor',rgb('HotPink')); %posterior
 h2.NumBins = nbins_po;
 h2.Normalization = 'pdf';
 if Fig2
-    xline(bfit(3)+1978,'LineWidth',1.5,'color',rgb('RoyalBlue'));
+    xline(bfit(3)+stYr,'LineWidth',1.5,'color',rgb('RoyalBlue'));
 end
 title('(c)');
 ax = gca;
@@ -178,5 +247,5 @@ xlabel('\nu [unitless]');
     
 
 % saving the figure
-FileName = 'SIAobs_bayes_22_11_10';
-saveas(gcf,['plots/' FileName],'png');
+saveas(gcf,['plots/' saveStr],'png');
+end
