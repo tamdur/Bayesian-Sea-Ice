@@ -5,7 +5,7 @@ function [chainAll,y_full,runInfo]= posterior_estimate_cmip_cluster(saveStr)
 % Ted Amdur, Charlotte Dyvik Henke
 % 11/14/22
 
-%parpool('local',str2num(getenv('SLURM_CPUS_PER_TASK')))
+parpool('local',str2num(getenv('SLURM_CPUS_PER_TASK')))
 
 %Define interval examined, slice sampler parameters
 yrsSampled=(1:42)'; %Observations to be sampled 

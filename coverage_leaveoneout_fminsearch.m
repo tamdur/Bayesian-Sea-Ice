@@ -3,10 +3,10 @@
 % find % of points that are within the envelope (coverage interval) 
 %inside has dimension 80 years of predictions x 79 models
 clearvars
-plotFlag=1;
+plotFlag=0;
 %load model_full_priorsb_22_10_17.mat
 %load model_predictionsb_22_10_18.mat
-load model_predictions_22_11_10.mat
+load model_predictions_22_11_14.mat
 load A20.mat
 glm=runInfo.glm;
 t2 = (1:122)';
@@ -26,12 +26,20 @@ mu1=mean(mean(chainAll(:,1,:)));
 mu2=mean(mean(chainAll(:,2,:)));
 mu3=mean(mean(chainAll(:,3,:)));
 mu4=mean(mean(chainAll(:,4,:)));
+p1=squeeze(chainAll(:,1,:));
+p2=squeeze(chainAll(:,1,:));
+p3=squeeze(chainAll(:,1,:));
+p4=squeeze(chainAll(:,1,:));
 for run=1:79
     yhat=zeros(size(chainAll,1),length(t2));
     for ii = 1:size(chainAll,1)
         yhat(ii,:) = glm(chainAll(ii,:,run),t2);
     end
-    loglike=   @(b) sum(-1.*log(normpdf(y2(:,run)-glm(b,t2),0,sigObs)));
+    logtrunc= @(b) log(unifpdf(b(1),quantile(p1(:),0.01),quantile(p1(:),0.99))+1e-8) + ...
+        log(unifpdf(b(2),quantile(p2(:),0.01),quantile(p2(:),0.99))+1e-8) + ...
+        log(unifpdf(b(3),quantile(p3(:),0.01),quantile(p3(:),0.99))+1e-8) + ...
+        log(unifpdf(b(4),quantile(p4(:),0.01),quantile(p4(:),0.99))+1e-8);
+    loglike=   @(b) sum(-1.*(log(normpdf(y2(:,run)-glm(b,t2),0,sigObs))+logtrunc(b)));
    [bfit,~] = fminsearch(loglike, [mu1 mu2 mu3 mu4]);
     bfull(:,run)=bfit;
     y_full(:,run) = glm(bfit,t2);
@@ -48,6 +56,7 @@ end
 valPct=nanmean(inPct,2);
 
 if plotFlag
+    figure
     for mn=1:79
         clf;
         plot(squeeze(yint_all(mn,1,:,:))');
