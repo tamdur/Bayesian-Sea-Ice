@@ -11,6 +11,11 @@ sigObs=0.6511.*iF; %std from estimate_obs_std4
 meanObs=-0.2681; %mean from estimate_obs_std4
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 tic %Determine time elapsed from run
+if nargin==0
+    nsamples=10000;
+    burn=1000;
+    thin=5;
+end
 priorPth='model_full_priorsb_22_11_10.mat';
 load(priorPth);
 glm  =runInfo.glm; % SIA sigmoid
@@ -34,7 +39,7 @@ obsInfo.yrsObserved=yrsObserved;obsInfo.iF=iF;obsInfo.sigObs=sigObs;obsInfo.mean
 obsInfo.priorPth=priorPth;obsInfo.disttypes=disttypes;obsInfo.nsamples=nsamples;
 obsInfo.burn=burn;obsInfo.thin=thin;obsInfo.logpost=logpost;obsInfo.tElapsed=toc;
 yObs=y;
-if nargin > 2
+if nargin > 3
     save(saveStr,'chain','obsInfo','yObs')
 end
 

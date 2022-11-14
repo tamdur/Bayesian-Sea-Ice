@@ -5,13 +5,14 @@
 clearvars
 plotFlag=1;
 %load model_full_priorsb_22_10_17.mat
-load model_predictionsb_22_10_18.mat
+%load model_predictionsb_22_10_18.mat
+load model_predictions_22_11_10.mat
 load A20.mat
 glm=runInfo.glm;
 t2 = (1:122)';
 inside=false(80,79);
 validInt=43:122;
-sigObs=0.5934; %std from estimate_obs_std4
+sigObs=0.6511; %std from estimate_obs_std4
 ct = 1;
 for ct_mod = 1:size(A20,2)
     for ct_em = 1:size(A20(ct_mod).X,2)
@@ -32,7 +33,7 @@ for run=1:79
     end
     loglike=   @(b) sum(-1.*log(normpdf(y2(:,run)-glm(b,t2),0,sigObs)));
    [bfit,~] = fminsearch(loglike, [mu1 mu2 mu3 mu4]);
-    
+    bfull(:,run)=bfit;
     y_full(:,run) = glm(bfit,t2);
     aCt=1;
     for alpha=0

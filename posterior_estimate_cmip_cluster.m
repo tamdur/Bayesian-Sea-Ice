@@ -1,9 +1,11 @@
-function [chainAll,y_full,runInfo]= posterior_estimate_cmip(saveStr)
+function [chainAll,y_full,runInfo]= posterior_estimate_cmip_cluster(saveStr)
 %Create posterior estimates for general logistic function parameters using
-%CMIP6 model runs of sea ice area
+%CMIP6 model runs of sea ice area, to be run on computing cluster
 %
 % Ted Amdur, Charlotte Dyvik Henke
-% 10/13/22
+% 11/14/22
+
+%parpool('local',str2num(getenv('SLURM_CPUS_PER_TASK')))
 
 %Define interval examined, slice sampler parameters
 yrsSampled=(1:42)'; %Observations to be sampled 
@@ -40,7 +42,8 @@ end
 if drawPriors
     [p1_priors,p2_priors,p3_priors,p4_priors]= sigmoid_params(A20);
 else
-    load model_full_priorsb_22_11_10.mat;
+    priorPath='model_full_priorsb_22_11_10.mat';
+    load(priorPath);
 end
 
 % storing most likely 1st round priors
@@ -59,7 +62,7 @@ if ~leaveOneOut
     p4=truncate(p4,quantile(p4_priors(:),0.01),quantile(p4_priors(:),0.99));
 end
 
-for ii = 1:nRuns
+parfor ii = 1:2
     tic
     %Create a prior that leaves out information from that model run
     incl=1:nRuns;
@@ -118,12 +121,9 @@ for ii = 1:nRuns
     % store values for each parameter
     chainAll(:,:,ii) = chain;
     nElapsed=toc;
-    tElapsed=tElapsed+nElapsed;
-    disp(['Run ' num2str(ii) ' posterior complete. T elapsed: ' num2str(tElapsed) ' seconds.'])
 end
-runInfo.init=init;runInfo.mu=mu;runInfo.sigma=sigma;
 runInfo.sigObs=sigObs;runInfo.nsamples=nsamples;runInfo.burn=burn;runInfo.thin=thin;
-runInfo.glm=glm;runInfo.iF=iF;runInfo.runNotes=runNotes;
+runInfo.glm=glm;runInfo.iF=iF;runInfo.runNotes=runNotes;runInfo.priors=priorPath;
 if nargin > 0
     save(saveStr,'chainAll','y_hat_full','runInfo');
 end

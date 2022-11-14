@@ -12,19 +12,26 @@ clearvars
 % uncertainty
 Fig1=0;
 if Fig1
-saveStr='SIAFig2_22_11_11';
+saveStr='SIAFig1_22_11_11';
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Settings for plot using CMIP6 output
+% Settings for plotting a single CMIP6 output run
 Fig2=0; %Set to 1 to use cmip6 output, 0 otherwise
 modelrun=19; % Set to the index of the model run used
 if Fig2
 saveStr='SIAFig2_22_11_11';
+load model_predictions_22_11_10.mat %Select set of posterior predictions to run
 end
-if Fig2
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Settings for plotting a panel of all the CMIP6 runs
+Fig2b=0;
+if Fig2b
+    saveStr='SIAFig2_22_11_11';
     load model_predictions_22_11_10.mat %Select set of posterior predictions to run
+    load model_full_priorsb_22_11_10.mat
 end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Settings for plot using actual observations
 Fig3=1; %Set to 1 to use actual remote sensing observations
@@ -43,6 +50,7 @@ else
     glm=obsInfo.glm;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %Prepare data to be plotted
 yrObs=(1:42)'; %Years of observations to be used
 t = yrObs;
@@ -73,7 +81,7 @@ if Fig1
     for ct_79 = 1:79
         %Get full fit
         mle=[mean(p1_priors(:,ct_79)) mean(p2_priors(:,ct_79)) mean(p3_priors(:,ct_79)) mean(p4_priors(:,ct_79))];
-        y_full(:,ct_79) = glm(bfit,tAll);
+        y_full(:,ct_79) = glm(mle,tAll);
     end
     siamodsprct=prctile(y_full',[2.5 50 97.5]);
     
@@ -105,6 +113,22 @@ if Fig1
     % saving the figures
     % saving the figure
     saveas(gcf,['plots/' saveStr],'png');
+end
+if Fig2b
+    glm=obsInfo.glm;
+    figure
+    for mn=1:79
+        full_fit_theta=[median(p1_priors(:,mn)) median(p2_priors(:,mn)) median(p3_priors(:,mn)) median(p4_priors(:,mn))]; 
+        yhat = glmtimeseries(glm,squeeze(chainAll(:,:,mn)),tAll);
+        yfull=glmtimeseries(glm,full_fit_theta,tAll);
+        yint=prctile(yhat,[7 93]);
+        subplot(10,8,mn)
+        plot(stYr+tAll,yint');
+        hold on; 
+        plot(stYr+tAll,yfull);
+        hold on;
+        title(['Run ' num2str(mn)])
+    end 
 end
 if Fig2 || Fig3
 if Fig2

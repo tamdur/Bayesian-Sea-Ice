@@ -4,8 +4,8 @@
 %inside has dimension 80 years of predictions x 79 models
 clearvars
 plotFlag=1;
-%load model_full_priorsb_22_10_17.mat
-load model_predictions_22_10_19.mat
+load model_full_priorsb_22_11_10.mat
+load model_predictions_22_11_11.mat
 load A20.mat
 glm=runInfo.glm;
 t2 = (1:122)';
@@ -19,19 +19,12 @@ for ct_mod = 1:size(A20,2)
         ct = ct+1;
     end
 end
-load model_full_posteriors_22_10_14.mat
+%load model_full_priorsb_22_11_10.mat
 for run=1:79
-    yhat=zeros(size(chainAll,1),length(t2));
-    for ii = 1:size(chainAll,1)
-        yhat(ii,:) = glm(chainAll(ii,:,run),t2);
-    end
-    pd1=fitdist(p1_priors(5000:end,run),'Normal');
-    pd2=fitdist(p2_priors(5000:end,run),'Normal');
-    pd3=fitdist(p3_priors(5000:end,run),'Normal');
-    mlp(run,:)=[pd1.mean pd2.mean pd3.mean];
-    
-    y_full(:,run) = runInfo.glm(mlp(run,:),t2);
-    y_full2(:,run)=smoothPH(y2(:,run),20);
+    yhat=glmtimeseries(glm,squeeze(chainAll(:,:,run)),t2);
+    mlp(run,:)=[median(p1_priors(:,run)) median(p2_priors(:,run)) median(p3_priors(:,run)) median(p4_priors(:,run))]; 
+    y_full(:,run) = glmtimeseries(glm,mlp(run,:),t2);
+    y_ful2(:,run)=smoothPH(y2(:,run),20);
     aCt=1;
     for alpha=0
         yint=prctile(yhat,[7 93]);
@@ -54,6 +47,7 @@ if plotFlag
         plot(y_full(:,mn));
         hold on;
         plot(y2(:,mn),'.')
+        hold on
         title(['Run ' num2str(mn)])
         pause
     end 
