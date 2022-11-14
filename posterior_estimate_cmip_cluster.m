@@ -23,7 +23,7 @@ runNotes="Truncated posterior to 99% range of prior";
 glm  = @(b,t) b(1).*(1-1./(1+exp(-b(2)*(t-b(3)))).^(1/b(4))); % SIA sigmoid
 
 %Load CMIP6 model data
-load A20.mat;
+load /mat_files/A20.mat;
 
 % creating array of model values
 t = yrsSampled;
@@ -62,7 +62,7 @@ if ~leaveOneOut
     p4=truncate(p4,quantile(p4_priors(:),0.01),quantile(p4_priors(:),0.99));
 end
 
-parfor ii = 1:2
+parfor ii = 1:79
     tic
     %Create a prior that leaves out information from that model run
     incl=1:nRuns;
