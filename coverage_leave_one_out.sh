@@ -4,9 +4,9 @@
 #SBATCH -e coverage_leave_one_out.err
 #SBATCH -N 1
 #SBATCH -c 32
-#SBATCH -t 0-15:30
+#SBATCH -t 0-05:30
 #SBATCH -p huce_cascade
-#SBATCH --mem=100G
+#SBATCH --mem=64G
 #SBATCH --mail-type=END
 #SBATCH --mail-user=amdur@g.harvard.edu
 

@@ -23,7 +23,7 @@ runNotes="Truncated posterior to 99% range of prior";
 glm  = @(b,t) b(1).*(1-1./(1+exp(-b(2)*(t-b(3)))).^(1/b(4))); % SIA sigmoid
 
 %Load CMIP6 model data
-load /mat_files/A20.mat;
+load mat_files/A20.mat;
 
 % creating array of model values
 t = yrsSampled;
@@ -42,7 +42,7 @@ end
 if drawPriors
     [p1_priors,p2_priors,p3_priors,p4_priors]= sigmoid_params(A20);
 else
-    priorPath='model_full_priorsb_22_11_10.mat';
+    priorPath='mat_files/model_full_priorsb_22_11_10.mat';
     load(priorPath);
 end
 
