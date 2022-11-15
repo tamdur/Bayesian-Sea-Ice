@@ -30,7 +30,7 @@ prior2= @(b2) pdf(p2,b2);
 prior3= @(b3) pdf(p3,b3);
 prior4= @(b4) pdf(p4,b4);
 init=[p1.mean  p2.mean    p3.mean     p4.mean];
-load sia_obs.mat
+load 'mat_files/sia_obs.mat'
 y=squeeze(sum(sia_obs,[1 2],'omitnan'))./1e6;
 logpost=   @(b) sum(log(normpdf(y-glm(b,yrsObserved),meanObs,sigObs)))+log(prior1(b(1)))+...
     log(prior2(b(2)))+log(prior3(b(3)))+log(prior4(b(4)));
