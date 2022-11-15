@@ -63,7 +63,7 @@ end
 runInfo.init=init;runInfo.mu=mu;runInfo.sigma=sigma;
 runInfo.sigObs=sigObs;runInfo.nsamples=nsamples;runInfo.burn=burn;runInfo.thin=thin;
 runInfo.glm=glm;runInfo.disttypes=disttypes;
-if nargin>1
+if nargin>=1
     save(saveStr,'p1_priors','p2_priors','p3_priors','p4_priors','runInfo')
 end
 end
