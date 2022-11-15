@@ -18,6 +18,7 @@ chainAll=zeros(nsamples,4,nRuns);
 sigObs=0.6511.*iF; %std from estimate_obs_std4
 meanObs=0;%-0.2681; %mean from estimate_obs_std4
 runNotes="Truncated posterior to 99% range of prior";
+disttypes=["Normal";"LogNormal";"Normal";"LogNormal"];
 
 %Define the model
 glm  = @(b,t) b(1).*(1-1./(1+exp(-b(2)*(t-b(3)))).^(1/b(4))); % SIA sigmoid
@@ -42,7 +43,7 @@ end
 if drawPriors
     [p1_priors,p2_priors,p3_priors,p4_priors]= sigmoid_params(A20);
 else
-    priorPath='mat_files/model_full_priorsb_22_11_10.mat';
+    priorPath='mat_files/model_full_priors_22_11_14.mat';
     load(priorPath);
 end
 
@@ -52,14 +53,14 @@ mlp=zeros(nRuns,4);
 
 tElapsed=0;
 if ~leaveOneOut
-    p1=fitdist(p1_priors(:),'Normal');
-    p2=fitdist(p2_priors(:),'LogNormal');
-    p3=fitdist(p3_priors(:),'Normal');
-    p4=fitdist(p4_priors(:),'Normal');
-    p1=truncate(p1,quantile(p1_priors(:),0.01),quantile(p1_priors(:),0.99));
-    p2=truncate(p2,quantile(p2_priors(:),0.01),quantile(p2_priors(:),0.99));
-    p3=truncate(p3,quantile(p3_priors(:),0.01),quantile(p3_priors(:),0.99));
-    p4=truncate(p4,quantile(p4_priors(:),0.01),quantile(p4_priors(:),0.99));
+    p1=fitdist(p1_priors(:),disttypes(1));
+    p2=fitdist(p2_priors(:),disttypes(2));
+    p3=fitdist(p3_priors(:),disttypes(3));
+    p4=fitdist(p4_priors(:),disttypes(4));
+    p1=truncate(p1,quantile(p1_priors(:),0.005),quantile(p1_priors(:),0.995));
+    p2=truncate(p2,quantile(p2_priors(:),0.005),quantile(p2_priors(:),0.995));
+    p3=truncate(p3,quantile(p3_priors(:),0.005),quantile(p3_priors(:),0.995));
+    p4=truncate(p4,quantile(p4_priors(:),0.005),quantile(p4_priors(:),0.995));
 end
 
 parfor ii = 1:79
@@ -72,23 +73,23 @@ parfor ii = 1:79
         p2p=p2_priors(:,incl);
         p3p=p3_priors(:,incl);
         p4p=p4_priors(:,incl);
-        p1=fitdist(p1p(:),'Normal');
-        p2=fitdist(p2p(:),'LogNormal');
-        p3=fitdist(p3p(:),'Normal');
-        p4=fitdist(p4p(:),'Normal');
-        p1=truncate(p1,quantile(p1p(:),0.01),quantile(p1p(:),0.99));
-        p2=truncate(p2,quantile(p2p(:),0.01),quantile(p2p(:),0.99));
-        p3=truncate(p3,quantile(p3p(:),0.01),quantile(p3p(:),0.99));
-        p4=truncate(p4,quantile(p4p(:),0.01),quantile(p4p(:),0.99));
+        p1=fitdist(p1p(:),disttypes(1));
+        p2=fitdist(p2p(:),disttypes(2));
+        p3=fitdist(p3p(:),disttypes(3));
+        p4=fitdist(p4p(:),disttypes(4));
+        p1=truncate(p1,quantile(p1p(:),0.005),quantile(p1p(:),0.995));
+        p2=truncate(p2,quantile(p2p(:),0.005),quantile(p2p(:),0.995));
+        p3=truncate(p3,quantile(p3p(:),0.005),quantile(p3p(:),0.995));
+        p4=truncate(p4,quantile(p4p(:),0.005),quantile(p4p(:),0.995));
     end
     mu1=p1.mean;mu2=p2.mu;mu3=p3.mean;mu4=p4.mean;
     sig1=p1.std;sig2=p2.sigma;sig3=p3.std;sig4=p4.std;
     
     %Get the fit over the full simulation for each CMIP run    
-    pr1=fitdist(p1_priors(:,ii),'Normal');
-    pr2=fitdist(p2_priors(:,ii),'LogNormal');
-    pr3=fitdist(p3_priors(:,ii),'Normal');
-    pr4=fitdist(p4_priors(:,ii),'Normal');
+    pr1=fitdist(p1_priors(:,ii),disttypes(1));
+    pr2=fitdist(p2_priors(:,ii),disttypes(2));
+    pr3=fitdist(p3_priors(:,ii),disttypes(3));
+    pr4=fitdist(p4_priors(:,ii),disttypes(4));
     mlp(ii,:)=[pr1.mean pr2.mean pr3.mean pr4.mean];
     y_hat_full(:,ii) = glm(mlp(ii,:),tAll);
     % ====================================================================== %
@@ -106,11 +107,7 @@ parfor ii = 1:79
     prior3= @(b3) pdf(p3,b3);
     prior4= @(b4) pdf(p4,b4);
     
-    %Write function for likelihood, posterior
-%     logtrunc= @(b) log(unifpdf(b(1),quantile(p1_priors(:),0.01),quantile(p1_priors(:),0.99))) + ...
-%         log(unifpdf(b(2),quantile(p2_priors(:),0.01),quantile(p2_priors(:),0.99))) + ...
-%         log(unifpdf(b(3),quantile(p3_priors(:),0.01),quantile(p3_priors(:),0.99))) + ...
-%         log(unifpdf(b(4),quantile(p4_priors(:),0.01),quantile(p4_priors(:),0.99)));
+    %Write function for posterior
     logpost=   @(b) sum(log(normpdf(y(:,ii)-glm(b,t),meanObs,sigObs)))+log(prior1(b(1)))+...
         log(prior2(b(2)))+log(prior3(b(3)))+log(prior4(b(4)));
     
@@ -124,6 +121,7 @@ parfor ii = 1:79
 end
 runInfo.sigObs=sigObs;runInfo.nsamples=nsamples;runInfo.burn=burn;runInfo.thin=thin;
 runInfo.glm=glm;runInfo.iF=iF;runInfo.runNotes=runNotes;runInfo.priors=priorPath;
+runInfo.disttypes = disttypes;
 if nargin > 0
     save(saveStr,'chainAll','y_hat_full','runInfo');
 end

@@ -11,4 +11,4 @@
 #SBATCH --mail-user=amdur@g.harvard.edu
 
 module load matlab/R2018b-fasrc01
-srun -c $SLURM_CPUS_PER_TASK matlab -nosplash -nodesktop -r "posterior_estimate_cmip_cluster('model_predictions_22_11_14.mat')"
+srun -c $SLURM_CPUS_PER_TASK matlab -nosplash -nodesktop -r "posterior_estimate_cmip_cluster('model_predictions_22_11_14b.mat');"
