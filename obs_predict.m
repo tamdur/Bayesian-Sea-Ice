@@ -16,7 +16,7 @@ if nargin==0
     burn=1000;
     thin=5;
 end
-priorPth='model_full_priors_22_11_14.mat';
+priorPth='mat_files/model_full_priors_22_11_14.mat';
 load(priorPth);
 glm  =runInfo.glm; % SIA sigmoid
 %Produce prior distributions from CMIP6 models
