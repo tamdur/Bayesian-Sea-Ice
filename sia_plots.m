@@ -35,7 +35,24 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Settings for plot using actual observations
-Fig3=1; %Set to 1 to use actual remote sensing observations
+Fig3=0; %Set to 1 to use actual remote sensing observations
+newPred=0; %Set to 1 to use new prediction, 0 to load past prediction
+if Fig3
+saveStr='SIAFig3_22_11_15';
+load model_full_priors_22_11_14.mat %Priors to plot
+end
+if newPred
+    %Set parameters for slicesampler
+    nsamples=10000;burn=1000;thin=5;%Number of draws; number of draws to first burn;thinning parameter
+    saveStr='obs_pred_22_11_15.mat';
+    [chain,~,yObs]=obs_predict(nsamples,burn,thin,saveStr);
+else
+    load obs_pred_22_11_15.mat %Insert name of saved prediction one desires to use
+    glm=obsInfo.glm;
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Settings for plot of sensitivity to parameters
+Fig4=1; %Set to 1 to use actual remote sensing observations
 newPred=0; %Set to 1 to use new prediction, 0 to load past prediction
 if Fig3
 saveStr='SIAFig3_22_11_15';
@@ -252,7 +269,6 @@ if Fig2
     saveas(gcf,['plots/' saveStr],'png');
 
 end
-
 if Fig3
         ypred=glmtimeseries(glm,chain,tAll);
     siaprctpred = prctile(ypred,[7 50 93])'; %Calculate percentiles
@@ -348,4 +364,122 @@ if Fig3
     
     % saving the figure
     saveas(gcf,['plots/' saveStr],'png');
+end
+if Fig4
+    yhat=glmtimeseries(glm,chain,tAll);
+    %Find closest year for each draw
+    [~,yr]=min(abs(yhat-1),[],2);
+    
+    ind=1;
+    for ii=min(yr):max(yr)
+        condI(ind).iYr=find(yr==ii);
+        condI(ind).year=ii;
+        condI(ind).conRange1=prctile(chain(condI(ind).iYr,1),[10 50 90]);
+        condI(ind).conRange2=prctile(chain(condI(ind).iYr,2),[10 50 90]);
+        condI(ind).conRange3=prctile(chain(condI(ind).iYr,3),[10 50 90]);
+        condI(ind).conRange4=prctile(chain(condI(ind).iYr,4),[10 50 90]);
+        ind=ind+1;
+    end
+    
+    %Start by plotting just the first parameter, the max asymptote 
+    xEdges=linspace(min(yr)-1,max(yr)+1,max(yr)-min(yr)+3); %Add an edge before an after so line varies from zero
+    xPts=diff(xEdges)+xEdges(1:end-1);
+    x=histcounts(yr,xEdges);
+    figure
+    subplot(2,2,1)
+    pSel=1; %Parameter being plotted
+    yEdges=linspace(min(chain(:,pSel)),max(chain(:,pSel)),30);
+    yEdges=[yEdges(1)-range(yEdges)./30 yEdges yEdges(end)+range(yEdges)./30];
+    yPts=diff(yEdges)+yEdges(1:end-1);
+    y=histcounts(chain(:,pSel),yEdges);
+    
+    for ii=1:length(condI)
+        xYr(ii)=condI(ii).year+stYr;
+        y10(ii)=condI(ii).conRange1(1);
+        y50(ii)=condI(ii).conRange1(2);
+        y90(ii)=condI(ii).conRange1(3);
+    end
+    plot(xYr,y10,'r--')
+    hold on
+    plot(xYr,y50,'Color','k','LineWidth',2)
+    hold on
+    plot(xYr,y90,'r--')
+    hold on
+    plot(xPts+stYr,x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10,'Color','b')
+    hold on
+    plot(y*(range(yr)./(100*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
+    title('A_{0}')
+    
+    subplot(2,2,2)
+    pSel=2; %Parameter being plotted
+    yEdges=linspace(min(chain(:,pSel)),max(chain(:,pSel)),30);
+    yEdges=[yEdges(1)-range(yEdges)./30 yEdges yEdges(end)+range(yEdges)./30];
+    yPts=diff(yEdges)+yEdges(1:end-1);
+    y=histcounts(chain(:,pSel),yEdges);
+    
+    for ii=1:length(condI)
+        xYr(ii)=condI(ii).year+stYr;
+        y10(ii)=condI(ii).conRange2(1);
+        y50(ii)=condI(ii).conRange2(2);
+        y90(ii)=condI(ii).conRange2(3);
+    end
+    plot(xYr,y10,'r--')
+    hold on
+    plot(xYr,y50,'Color','k','LineWidth',2)
+    hold on
+    plot(xYr,y90,'r--')
+    hold on
+    plot(xPts+stYr,x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10,'Color','b')
+    hold on
+    plot(y*(range(yr)./(100*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
+    title('\alpha')
+    
+    subplot(2,2,3)
+    pSel=3; %Parameter being plotted
+    yEdges=linspace(min(chain(:,pSel)),max(chain(:,pSel)),30);
+    yEdges=[yEdges(1)-range(yEdges)./30 yEdges yEdges(end)+range(yEdges)./30];
+    yPts=diff(yEdges)+yEdges(1:end-1);
+    y=histcounts(chain(:,pSel),yEdges);
+    
+    for ii=1:length(condI)
+        xYr(ii)=condI(ii).year+stYr;
+        y10(ii)=condI(ii).conRange3(1);
+        y50(ii)=condI(ii).conRange3(2);
+        y90(ii)=condI(ii).conRange3(3);
+    end
+    plot(xYr,y10,'r--')
+    hold on
+    plot(xYr,y50,'Color','k','LineWidth',2)
+    hold on
+    plot(xYr,y90,'r--')
+    hold on
+    plot(xPts+stYr,x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10,'Color','b')
+    hold on
+    plot(y*(range(yr)./(100*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
+    title('t_{0}')
+    
+    subplot(2,2,4)
+    pSel=4; %Parameter being plotted
+    yEdges=linspace(min(chain(:,pSel)),max(chain(:,pSel)),30);
+    yEdges=[yEdges(1)-range(yEdges)./30 yEdges yEdges(end)+range(yEdges)./30];
+    yPts=diff(yEdges)+yEdges(1:end-1);
+    y=histcounts(chain(:,pSel),yEdges);
+    
+    for ii=1:length(condI)
+        xYr(ii)=condI(ii).year+stYr;
+        y10(ii)=condI(ii).conRange4(1);
+        y50(ii)=condI(ii).conRange4(2);
+        y90(ii)=condI(ii).conRange4(3);
+    end
+    plot(xYr,y10,'r--')
+    hold on
+    plot(xYr,y50,'Color','k','LineWidth',2)
+    hold on
+    plot(xYr,y90,'r--')
+    hold on
+    plot(xPts+stYr,x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10,'Color','b')
+    hold on
+    plot(y*(range(yr)./(100*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
+    title('\nu')
+    
 end
