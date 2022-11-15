@@ -54,7 +54,7 @@ end
 % Settings for plot of sensitivity to parameters
 Fig4=1; %Set to 1 to use actual remote sensing observations
 newPred=0; %Set to 1 to use new prediction, 0 to load past prediction
-if Fig3
+if Fig4
 saveStr='SIAFig4_22_11_15';
 load model_full_priors_22_11_14.mat %Priors to plot
 end
@@ -481,5 +481,8 @@ if Fig4
     hold on
     plot(y*(range(yr)./(100*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
     title('\nu')
+    
+    % saving the figure
+    saveas(gcf,['plots/' saveStr],'png');
     
 end
