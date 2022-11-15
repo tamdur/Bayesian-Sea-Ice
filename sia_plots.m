@@ -55,7 +55,7 @@ end
 Fig4=1; %Set to 1 to use actual remote sensing observations
 newPred=0; %Set to 1 to use new prediction, 0 to load past prediction
 if Fig3
-saveStr='SIAFig3_22_11_15';
+saveStr='SIAFig4_22_11_15';
 load model_full_priors_22_11_14.mat %Priors to plot
 end
 if newPred
@@ -385,7 +385,7 @@ if Fig4
     xEdges=linspace(min(yr)-1,max(yr)+1,max(yr)-min(yr)+3); %Add an edge before an after so line varies from zero
     xPts=diff(xEdges)+xEdges(1:end-1);
     x=histcounts(yr,xEdges);
-    figure
+    figure2('Position',[10 10 1000 1000])
     subplot(2,2,1)
     pSel=1; %Parameter being plotted
     yEdges=linspace(min(chain(:,pSel)),max(chain(:,pSel)),30);
