@@ -4,8 +4,8 @@
 %inside has dimension 80 years of predictions x 79 models
 clearvars
 plotFlag=1;
-load model_full_priorsb_22_11_10.mat
-load model_predictions_22_11_11.mat
+load model_full_priors_22_11_14.mat
+load model_predictions_22_11_14.mat
 load A20.mat
 glm=runInfo.glm;
 t2 = (1:122)';
@@ -23,11 +23,11 @@ end
 for run=1:79
     yhat=glmtimeseries(glm,squeeze(chainAll(:,:,run)),t2);
     mlp(run,:)=[median(p1_priors(:,run)) median(p2_priors(:,run)) median(p3_priors(:,run)) median(p4_priors(:,run))]; 
-    y_full(:,run) = glmtimeseries(glm,mlp(run,:),t2);
-    y_ful2(:,run)=smoothPH(y2(:,run),20);
+    y_full(:,run) = y_hat_full(:,run);
+    y_full2(:,run)=smoothPH(y2(:,run),20);
     aCt=1;
     for alpha=0
-        yint=prctile(yhat,[7 93]);
+        yint=prctile(yhat,[5 95]);
         yint_all(run,aCt,:,:)=yint;
         inside=zeros(1,80);
         vInt=validInt(y_full(validInt,run)>0.25);

@@ -8,7 +8,7 @@ function [chain,obsInfo,yObs]=obs_predict(nsamples,burn,thin,saveStr)
 yrsObserved=(1:42)'; %Years in the dataset counted as observations 
 iF=1; %inflation factor
 sigObs=0.6511.*iF; %std from estimate_obs_std4
-meanObs=-0.2681; %mean from estimate_obs_std4
+meanObs=0.2681; %mean from estimate_obs_std4
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 tic %Determine time elapsed from run
 if nargin==0
@@ -16,11 +16,11 @@ if nargin==0
     burn=1000;
     thin=5;
 end
-priorPth='model_full_priorsb_22_11_10.mat';
+priorPth='model_full_priors_22_11_14.mat';
 load(priorPth);
 glm  =runInfo.glm; % SIA sigmoid
 %Produce prior distributions from CMIP6 models
-disttypes=["Normal";"Lognormal";"Normal";"Normal"];
+disttypes=["Normal";"Lognormal";"Normal";"Lognormal"];
 p1=fitdist(p1_priors(:),disttypes(1));
 p2=fitdist(p2_priors(:),disttypes(2));
 p3=fitdist(p3_priors(:),disttypes(3));

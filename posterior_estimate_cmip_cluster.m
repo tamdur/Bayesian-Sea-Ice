@@ -119,7 +119,8 @@ parfor ii = 1:79
     chainAll(:,:,ii) = chain;
     nElapsed=toc;
 end
-runInfo.sigObs=sigObs;runInfo.nsamples=nsamples;runInfo.burn=burn;runInfo.thin=thin;
+runInfo.sigObs=sigObs;runInfo.meanObs=meanObs;
+runInfo.nsamples=nsamples;runInfo.burn=burn;runInfo.thin=thin;
 runInfo.glm=glm;runInfo.iF=iF;runInfo.runNotes=runNotes;runInfo.priors=priorPath;
 runInfo.disttypes = disttypes;
 if nargin > 0
