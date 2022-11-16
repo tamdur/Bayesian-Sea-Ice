@@ -3,3 +3,6 @@
 
 # Ignore unneeded mat files
 /mat_files_old
+
+# Ignore Matlab active scripts
+*.asv

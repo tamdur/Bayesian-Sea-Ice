@@ -54,7 +54,6 @@ end
 % Settings for plot of sensitivity to parameters
 Fig4=1; %Set to 1 to use actual remote sensing observations
 newPred=0; %Set to 1 to use new prediction, 0 to load past prediction
-fSize=16; %Font Size
 if Fig4
 saveStr='SIAFig4_22_11_16';
 load model_full_priors_22_11_14.mat %Priors to plot
@@ -391,7 +390,7 @@ if Fig4
     xEdges=linspace(min(yr)-1,max(yr)+1,max(yr)-min(yr)+3); %Add an edge before an after so line varies from zero
     xPts=diff(xEdges)+xEdges(1:end-1);
     x=histcounts(yr,xEdges);
-    xprior=histcounts(yr_all,xEdges);
+    xprior=histcounts(yr_all,xedges);
     figure2('Position',[10 10 1000 1000])
     subplot(2,2,1)
     pSel=1; %Parameter being plotted
@@ -414,9 +413,6 @@ if Fig4
     plot(xYr,y90,'r--')
     hold on
     xy=x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10;
-    xyprior=xprior*(range(chain(:,pSel))./(10*max(xprior)))+min(yPts)-range(chain(:,pSel))./10;
-    plot(xPts+stYr,xyprior,'b--')
-    hold on
     plot(xPts+stYr,xy,'Color','b')
     hold on
     plot(yprior*(range(yr)./(0.1*max(yprior)*max(yr)))+min(yr)+stYr-5,yPts,'b--');
@@ -426,7 +422,6 @@ if Fig4
     ylim([min(xy) max(yPts)])
     ylabel('A_{0} [10^6 km^2]');
     xlabel('Year of Ice-Free Arctic')
-    set(gca,'FontSize',fSize)
     
     subplot(2,2,2)
     pSel=2; %Parameter being plotted
@@ -449,9 +444,6 @@ if Fig4
     plot(xYr,y90,'r--')
     hold on
     xy=x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10;
-    xyprior=xprior*(range(chain(:,pSel))./(10*max(xprior)))+min(yPts)-range(chain(:,pSel))./10;
-    plot(xPts+stYr,xyprior,'b--')
-    hold on
     plot(xPts+stYr,xy,'Color','b')
     hold on
     plot(yprior*(range(yr)./(0.1*max(yprior)*max(yr)))+min(yr)+stYr-5,yPts,'b--');
@@ -461,7 +453,6 @@ if Fig4
     ylim([min(xy) max(yPts)])
     xlabel('Year of Ice-Free Arctic')
     ylabel('\alpha');
-    set(gca,'FontSize',fSize)
     
     subplot(2,2,3)
     pSel=3; %Parameter being plotted
@@ -484,9 +475,6 @@ if Fig4
     plot(xYr,y90,'r--')
     hold on
     xy=x*(range(chain(:,pSel))./(10*max(x)))+min(yPts);
-    xyprior=xprior*(range(chain(:,pSel))./(10*max(xprior)))+min(yPts);
-    plot(xPts+stYr,xyprior,'b--')
-    hold on
     plot(xPts+stYr,xy,'Color','b')
     hold on
     plot(yprior*(range(yr)./(0.1*max(yprior)*max(yr)))+min(yr)+stYr-5,yPts,'b--');
@@ -496,7 +484,6 @@ if Fig4
     ylim([min(xy) max(yPts)])
     xlabel('Year of Ice-Free Arctic')
     ylabel('t_{0} [year]');
-    set(gca,'FontSize',fSize)
     
     subplot(2,2,4)
     pSel=4; %Parameter being plotted
@@ -519,9 +506,6 @@ if Fig4
     plot(xYr,y90,'r--')
     hold on
     xy=x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10;
-    xyprior=xprior*(range(chain(:,pSel))./(10*max(xprior)))+min(yPts)-range(chain(:,pSel))./10;
-    plot(xPts+stYr,xyprior,'b--')
-    hold on
     plot(xPts+stYr,xy,'Color','b')
     hold on
     plot(yprior*(range(yr)./(0.1*max(yprior)*max(yr)))+min(yr)+stYr-5,yPts,'b--');
@@ -531,7 +515,6 @@ if Fig4
     ylim([min(xy) max(yPts)])
     xlabel('Year of Ice-Free Arctic')
     ylabel('\nu')
-    set(gca,'FontSize',fSize)
     
     % saving the figure
     saveas(gcf,['plots/' saveStr],'png');
