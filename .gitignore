@@ -1,0 +1,5 @@
+# Ignore Mac system files
+.DS_store
+
+# Ignore unneeded mat files
+/mat_files_old
