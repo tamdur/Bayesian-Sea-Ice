@@ -47,7 +47,7 @@ if newPred
     saveStr='obs_pred_22_11_15.mat';
     [chain,~,yObs]=obs_predict(nsamples,burn,thin,saveStr);
 else
-    load obs_pred_22_11_15.mat %Insert name of saved prediction one desires to use
+    load obs_pred_22_11_15long.mat %Insert name of saved prediction one desires to use
     glm=obsInfo.glm;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -64,7 +64,7 @@ if newPred
     saveStr='obs_pred_22_11_15.mat';
     [chain,~,yObs]=obs_predict(nsamples,burn,thin,saveStr);
 else
-    load obs_pred_22_11_15.mat %Insert name of saved prediction one desires to use
+    load obs_pred_22_11_15long.mat %Insert name of saved prediction one desires to use
     glm=obsInfo.glm;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -301,7 +301,7 @@ if Fig3
     % setting number of bins for histogram so less dense and colour actually
     % shows up
     nbins_pr=50;
-    nbins_po=20;
+    nbins_po=50;
     h1 = histogram(p1_priors,'FaceColor',rgb('Grey'));%priors
     h1.NumBins= nbins_pr;
     h1.Normalization = 'pdf';
@@ -326,7 +326,8 @@ if Fig3
     title('(b)');
     ax = gca;
     ax.TitleHorizontalAlignment = 'left';
-    xlim([0 0.5])
+    set(ax,'xscale','log')
+    xlim([0 2])
     ylabel('distribution');
     xlabel('alpha [units]');
     
@@ -341,7 +342,7 @@ if Fig3
     title('(c)');
     ax = gca;
     ax.TitleHorizontalAlignment = 'left';
-    xlim([1950 2060])
+    xlim([1970 2080])
     ylabel('distribution');
     xlabel('t_{0} [year]');
     
@@ -357,7 +358,8 @@ if Fig3
     title('(d)');
     ax = gca;
     ax.TitleHorizontalAlignment = 'left';
-    xlim([0 10])
+    set(ax,'xscale','log')
+    xlim([0 100])
     ylabel('distribution');
     xlabel('\nu [unitless]');
     
@@ -405,9 +407,12 @@ if Fig4
     hold on
     plot(xYr,y90,'r--')
     hold on
-    plot(xPts+stYr,x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10,'Color','b')
+    xy=x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10;
+    plot(xPts+stYr,xy,'Color','b')
     hold on
-    plot(y*(range(yr)./(100*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
+    plot(y*(range(yr)./(0.1*max(y)*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
+    xlim([2019 2060])
+    ylim([min(xy) max(yPts)])
     title('A_{0}')
     
     subplot(2,2,2)
@@ -429,23 +434,26 @@ if Fig4
     hold on
     plot(xYr,y90,'r--')
     hold on
-    plot(xPts+stYr,x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10,'Color','b')
+    xy=x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10;
+    plot(xPts+stYr,xy,'Color','b')
     hold on
-    plot(y*(range(yr)./(100*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
+    plot(y*(range(yr)./(0.1*max(y)*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
+    xlim([2019 2060])
+    ylim([min(xy) max(yPts)])
     title('\alpha')
     
     subplot(2,2,3)
     pSel=3; %Parameter being plotted
     yEdges=linspace(min(chain(:,pSel)),max(chain(:,pSel)),30);
     yEdges=[yEdges(1)-range(yEdges)./30 yEdges yEdges(end)+range(yEdges)./30];
-    yPts=diff(yEdges)+yEdges(1:end-1);
-    y=histcounts(chain(:,pSel),yEdges);
+    yPts=diff(yEdges)+yEdges(1:end-1)+stYr;
+    y=histcounts(chain(:,pSel)+stYr,yEdges+stYr);
     
     for ii=1:length(condI)
         xYr(ii)=condI(ii).year+stYr;
-        y10(ii)=condI(ii).conRange3(1);
-        y50(ii)=condI(ii).conRange3(2);
-        y90(ii)=condI(ii).conRange3(3);
+        y10(ii)=condI(ii).conRange3(1)+stYr;
+        y50(ii)=condI(ii).conRange3(2)+stYr;
+        y90(ii)=condI(ii).conRange3(3)+stYr;
     end
     plot(xYr,y10,'r--')
     hold on
@@ -453,9 +461,12 @@ if Fig4
     hold on
     plot(xYr,y90,'r--')
     hold on
-    plot(xPts+stYr,x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10,'Color','b')
+    xy=x*(range(chain(:,pSel))./(10*max(x)))+min(yPts);
+    plot(xPts+stYr,xy,'Color','b')
     hold on
-    plot(y*(range(yr)./(100*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
+    plot(y*(range(yr)./(0.1*max(y)*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
+    xlim([2019 2060])
+    ylim([min(xy) max(yPts)])
     title('t_{0}')
     
     subplot(2,2,4)
@@ -477,9 +488,12 @@ if Fig4
     hold on
     plot(xYr,y90,'r--')
     hold on
-    plot(xPts+stYr,x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10,'Color','b')
+    xy=x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10;
+    plot(xPts+stYr,xy,'Color','b')
     hold on
-    plot(y*(range(yr)./(100*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
+    plot(y*(range(yr)./(0.1*max(y)*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
+    xlim([2019 2060])
+    ylim([min(xy) max(yPts)])
     title('\nu')
     
     % saving the figure

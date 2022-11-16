@@ -8,7 +8,8 @@ function [chain,obsInfo,yObs]=obs_predict(nsamples,burn,thin,saveStr)
 yrsObserved=(1:42)'; %Years in the dataset counted as observations 
 iF=1; %inflation factor
 sigObs=0.6511.*iF; %std from estimate_obs_std4
-meanObs=0.2681; %mean from estimate_obs_std4
+meanObs=0; %mean from estimate_obs_std4
+runNotes="Truncated posterior to 99% range of prior";
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 tic %Determine time elapsed from run
 if nargin==0
@@ -25,6 +26,10 @@ p1=fitdist(p1_priors(:),disttypes(1));
 p2=fitdist(p2_priors(:),disttypes(2));
 p3=fitdist(p3_priors(:),disttypes(3));
 p4=fitdist(p4_priors(:),disttypes(4));
+p1=truncate(p1,quantile(p1_priors(:),0.005),quantile(p1_priors(:),0.995));
+p2=truncate(p2,quantile(p2_priors(:),0.005),quantile(p2_priors(:),0.995));
+p3=truncate(p3,quantile(p3_priors(:),0.005),quantile(p3_priors(:),0.995));
+p4=truncate(p4,quantile(p4_priors(:),0.005),quantile(p4_priors(:),0.995));
 prior1= @(b1) pdf(p1,b1);
 prior2= @(b2) pdf(p2,b2);
 prior3= @(b3) pdf(p3,b3);
@@ -38,6 +43,7 @@ logpost=   @(b) sum(log(normpdf(y-glm(b,yrsObserved),meanObs,sigObs)))+log(prior
 obsInfo.yrsObserved=yrsObserved;obsInfo.iF=iF;obsInfo.sigObs=sigObs;obsInfo.meanObs=meanObs;obsInfo.glm=glm;
 obsInfo.priorPth=priorPth;obsInfo.disttypes=disttypes;obsInfo.nsamples=nsamples;
 obsInfo.burn=burn;obsInfo.thin=thin;obsInfo.logpost=logpost;obsInfo.tElapsed=toc;
+obsInfo.runNotes=runNotes;
 yObs=y;
 if nargin > 3
     save(saveStr,'chain','obsInfo','yObs')

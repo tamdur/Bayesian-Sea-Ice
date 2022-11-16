@@ -11,4 +11,4 @@
 #SBATCH --mail-user=amdur@g.harvard.edu
 
 module load matlab/R2018b-fasrc01
-srun -c $SLURM_CPUS_PER_TASK matlab -nosplash -nodesktop -r "obs_predict(100000,1000,25,'obs_pred_22_11_15long.mat');"
+srun -c $SLURM_CPUS_PER_TASK matlab -nosplash -nodesktop -r "obs_predict(100000,1000,25,'obs_pred_22_11_16long.mat');"
