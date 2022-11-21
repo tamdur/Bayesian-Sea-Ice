@@ -12,7 +12,9 @@ clearvars
 % uncertainty
 Fig1=0;
 if Fig1
-saveStr='SIAFig1_22_11_15';
+    fSize=16; %Font Size
+    saveStr='SIAFig1_22_11_21';
+    load model_full_priors_22_11_14.mat
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -20,17 +22,20 @@ end
 Fig2=0; %Set to 1 to use cmip6 output, 0 otherwise
 modelrun=19; % Set to the index of the model run used
 if Fig2
-saveStr='SIAFig2_22_11_15';
-load model_predictions_22_11_14b.mat %Select set of posterior predictions to run
-load model_full_priors_22_11_14.mat
+    fSize=16; %Font Size
+    saveStr='SIAFig2_22_11_21';
+    load model_predictions_22_11_14b.mat %Select set of posterior predictions to run
+    load model_full_priors_22_11_14.mat
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Settings for plotting a panel of all the CMIP6 runs
 Fig2b=0;
 if Fig2b
-    saveStr='SIAFig2b_22_11_15';
+    fSize=16; %Font Size
+    saveStr='SIAFig2b_22_11_21';
     load model_predictions_22_11_14b.mat %Select set of posterior predictions to run
     load model_full_priors_22_11_14.mat
+    load mat_files/A20.mat
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -38,8 +43,9 @@ end
 Fig3=0; %Set to 1 to use actual remote sensing observations
 newPred=0; %Set to 1 to use new prediction, 0 to load past prediction
 if Fig3
-saveStr='SIAFig3_22_11_16';
-load model_full_priors_22_11_14.mat %Priors to plot
+    fSize=16; %Font Size
+    saveStr='SIAFig3_22_11_21';
+    load model_full_priors_22_11_14.mat %Priors to plot
 end
 if newPred
     %Set parameters for slicesampler
@@ -54,10 +60,10 @@ end
 % Settings for plot of sensitivity to parameters
 Fig4=1; %Set to 1 to use actual remote sensing observations
 newPred=0; %Set to 1 to use new prediction, 0 to load past prediction
-fSize=16; %Font Size
 if Fig4
-saveStr='SIAFig4_22_11_16';
-load model_full_priors_22_11_14.mat %Priors to plot
+    fSize=16; %Font Size
+    saveStr='SIAFig4_22_11_21';
+    load model_full_priors_22_11_14.mat %Priors to plot
 end
 if newPred
     %Set parameters for slicesampler
@@ -90,11 +96,7 @@ if Fig1
             ct = ct+1;
         end
     end
-    % ======================================================================
-    % Get priors for each of the 79 realisations
-    load model_full_priorsb_22_11_10.mat
-    
-    
+    % ======================================================================    
     % storing 1st round priors, finding most frequent value
     glm=runInfo.glm; %The functional form used by the MCMC model
     for ct_79 = 1:79
@@ -102,7 +104,7 @@ if Fig1
         mle=[mean(p1_priors(:,ct_79)) mean(p2_priors(:,ct_79)) mean(p3_priors(:,ct_79)) mean(p4_priors(:,ct_79))];
         y_full(:,ct_79) = glm(mle,tAll);
     end
-    siamodsprct=prctile(y_full',[2.5 50 97.5]);
+    siamodsprct=prctile(y_full',[10 50 90]);
     
     % creating index for first ensemble member for each model
     for ct_mod = 1:20
@@ -112,30 +114,44 @@ if Fig1
     
     % plotting figure 1
     figure; hold on;
-    plot(t+stYr,y_obs,'color',rgb('CornflowerBlue'),'LineWidth',1.3);%observations
-    plot(tAll+stYr,siamodsprct(2,:),'color',rgb('Crimson'),'LineWidth',1.3);%multimodel median
+    h(1)=plot(t+stYr,y_obs,'color',rgb('CornflowerBlue'),'LineWidth',1.3);%observations
+    h(2)=plot(tAll+stYr,siamodsprct(2,:),'color',rgb('Crimson'),'LineWidth',1.3);%multimodel median
     shade(tAll+stYr,siamodsprct(1,:),tAll+stYr,siamodsprct(3,:),'color',rgb('LightPink'),'FillType',[2 1]);
     for ct =em1
-        plot(tAll+stYr,y2(:,ct),'color',[rgb('Black'),0.15]); %actual realisations
-        plot(tAll+stYr,y_full(:,ct),':','color',rgb('Black')); %logistic fits
-        yline(1,'--k');%threshold
+        h(3)=plot(tAll+stYr,y2(:,ct),'color',[rgb('Black'),0.15]); %actual realisations
+        h(4)=plot(tAll+stYr,y_full(:,ct),':','color',rgb('Black')); %logistic fits
+        h(5)=yline(1,'--k');%threshold
         %     plot(t2+stYr,siamodsprct(:,2),'color',rgb('Red'),'LineWidth',1.5);%model median again
         axis tight;
         xlabel('Year');
         ylabel('Sea ice area [10^6 km^2]');
-        yline(1,'--k');
     end
     plot(t+stYr,y_obs,'color',rgb('CornflowerBlue'),'LineWidth',1.3);%observations again
     plot(tAll+stYr,siamodsprct(2,:),'color',rgb('Crimson'),'LineWidth',1.3);%multimodel median again
-    legend('observations','multi-model median','','','multi-model 95% c.i.','simulations','logistic fits','sea-ice-free threshold');
-    
-    % saving the figures
+    legend(h,'observations','multi-model median','simulation values','logistic fits','sea-ice-free threshold');
+    legend boxoff
+    set(gca,'FontSize',fSize);
     % saving the figure
     saveas(gcf,['plots/' saveStr],'png');
 end
 if Fig2b
+    %Get labels for all the model runs
+    ct = 1;
+    for ct_mod = 1:size(A20,2)
+        if size(A20(ct_mod).X,2)>1
+            runCt=1;
+            for ct_em = 1:size(A20(ct_mod).X,2)
+                pltLabel(ct)=strcat(string(A20(ct_mod).name), " run ",num2str(runCt));
+                runCt=runCt+1;
+                ct = ct+1;
+            end
+        else
+            pltLabel(ct)=string(A20(ct_mod).name);
+            ct=ct+1;
+        end 
+    end
     glm=obsInfo.glm;
-    figure
+    figure2('Position',[10 10 1200 1000])
     for mn=1:79
         full_fit_theta=[median(p1_priors(:,mn)) median(p2_priors(:,mn)) median(p3_priors(:,mn)) median(p4_priors(:,mn))]; 
         yhat = glmtimeseries(glm,squeeze(chainAll(:,:,mn)),tAll);
@@ -146,7 +162,7 @@ if Fig2b
         hold on; 
         plot(stYr+tAll,yfull,'Color','r');
         hold on;
-        title(['Run ' num2str(mn)])
+        title(pltLabel(mn))
     end 
     saveas(gcf,['plots/' saveStr],'png');
 end
@@ -275,28 +291,28 @@ if Fig3
     siaprctpred = prctile(ypred,[7 50 93])'; %Calculate percentiles
     
     % FIGURE
-    figure2('Position',[10 10 800 1000])
+    figure2('Position',[10 10 1200 1000])
     subplot(2,4,(5:8))
     %Shade the 95% CI prediction of logistic
     shade(tAll(42:end)+stYr,siaprctpred(42:end,1),tAll(42:end)+stYr,siaprctpred(42:end,3),'color',rgb('LightPink'),'FillType',[2 1]);
     hold on
     shade(t+stYr,siaprctpred(yrObs,1),t+stYr,siaprctpred(yrObs,3),'color',rgb('Gray'),'FillType',[2 1]);
     hold on
-
-        h(1)=plot(t+stYr,yObs,'k');
+    h(1)=plot(t+stYr,yObs,'k');
     hold on
     h(2)=plot(tAll+stYr,siaprctpred(:,2),'color',rgb('HotPink')); %the 50th percentile of Bayesian fit
     hold on
-    yline(1,'--k');
+    h(3)=yline(1,'--k');
     axis tight;
     xlabel('Year');
     ylabel('SIA [10^6 km^2]');
     title('(e)');
     ax = gca;
     ax.TitleHorizontalAlignment = 'left';
-        legend('observations','training interval','forecast median','forecast 80% ci')
-    
-    
+    legend(h,'observations','prediction median','sea-ice-free threshold')
+    legend boxoff
+    set(gca,'FontSize',fSize)
+
     % plots histograms of priors + posteriors for each of the parameters
     subplot(2,4,1);hold on;
     % setting number of bins for histogram so less dense and colour actually
@@ -316,6 +332,8 @@ if Fig3
     xlabel('A_{0} [10^6 km^2]');
     xlim([0 20])
     legend('prior','posterior','full-fit');
+    legend boxoff
+    set(gca,'FontSize',fSize)
     
     subplot(2,4,2); hold on;
     h1 = histogram(p2_priors,'FaceColor',rgb('Grey'));%priors
@@ -331,6 +349,7 @@ if Fig3
     xlim([0 2])
     ylabel('distribution');
     xlabel('alpha [units]');
+    set(gca,'FontSize',fSize)
     
     
     subplot(2,4,3); hold on;
@@ -346,6 +365,7 @@ if Fig3
     xlim([1970 2080])
     ylabel('distribution');
     xlabel('t_{0} [year]');
+    set(gca,'FontSize',fSize)
     
     
     
@@ -363,6 +383,7 @@ if Fig3
     xlim([0 50])
     ylabel('distribution');
     xlabel('\nu [unitless]');
+    set(gca,'FontSize',fSize)
     
     
     % saving the figure
@@ -423,7 +444,7 @@ if Fig4
     hold on
     plot(y*(range(yr)./(0.1*max(y)*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
     xlim([2019 2060])
-    ylim([min(xy) max(yPts)])
+    ylim([min(xy) 17])
     ylabel('A_{0} [10^6 km^2]');
     xlabel('Year of Ice-Free Arctic')
     set(gca,'FontSize',fSize)
@@ -458,7 +479,7 @@ if Fig4
     hold on
     plot(y*(range(yr)./(0.1*max(y)*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
     xlim([2019 2060])
-    ylim([min(xy) max(yPts)])
+    ylim([min(xy) 1])
     xlabel('Year of Ice-Free Arctic')
     ylabel('\alpha');
     set(gca,'FontSize',fSize)
@@ -528,7 +549,7 @@ if Fig4
     hold on
     plot(y*(range(yr)./(0.1*max(y)*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
     xlim([2019 2060])
-    ylim([min(xy) max(yPts)])
+    ylim([min(xy) 30])
     xlabel('Year of Ice-Free Arctic')
     ylabel('\nu')
     set(gca,'FontSize',fSize)
