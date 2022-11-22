@@ -402,17 +402,6 @@ if Fig4
     [~,yr_all]=min(abs(yhat_all-1),[],2);
     yr_all=yr_all.*tRes;
     
-    ind=1;
-    for ii=min(yr):max(yr)
-        condI(ind).iYr=find(yr==ii);
-        condI(ind).year=ii;
-        condI(ind).conRange1=prctile(chain(condI(ind).iYr,1),[10 50 90]);
-        condI(ind).conRange2=prctile(chain(condI(ind).iYr,2),[10 50 90]);
-        condI(ind).conRange3=prctile(chain(condI(ind).iYr,3),[10 50 90]);
-        condI(ind).conRange4=prctile(chain(condI(ind).iYr,4),[10 50 90]);
-        ind=ind+1;
-    end
-    
     %Start by plotting just the first parameter, the max asymptote 
     %Add an edge before and after so line varies from zero
     yEdges=linspace(min(yr)-1,max(yr)+1,max(yr)-min(yr)+3); 
@@ -425,20 +414,7 @@ if Fig4
     subplot(2,2,1)
     pSel=1; %Parameter being plotted
     [x,xEdges,xPts,xPrior,conPlt,xy,xyprior,xPriorPts,xPostPts]=conditionaldistvalues(pSel,...
-    chain,p1_priors,yr,xNum,stYr,y,yprior);
-    plot(xPts,conPlt(:,1),'r--')
-    hold on
-    plot(xPts,conPlt(:,2),'Color','k','LineWidth',2)
-    hold on
-    plot(xPts,conPlt(:,3),'r--')
-    hold on
-    plot(xyprior,yPts+stYr,'b--')
-    hold on
-    plot(xy,yPts+stYr,'Color','b')
-    hold on
-    plot(xPts,xPriorPts,'b--');
-    hold on
-    plot(xPts,xPostPts,'Color','b');
+    chain,p1_priors,yr,xNum,stYr,y,yprior,yPts,1);
     xlim([4.5 18])
     ylim([2019 2060])
     xlabel('A_{0} [10^6 km^2]');
@@ -448,20 +424,7 @@ if Fig4
     subplot(2,2,2)
     pSel=2; %Parameter being plotted
     [x,xEdges,xPts,xPrior,conPlt,xy,xyprior,xPriorPts,xPostPts]=conditionaldistvalues(pSel,...
-        chain,p2_priors,yr,xNum,stYr,y,yprior);
-       plot(xPts,conPlt(:,1),'r--')
-    hold on
-    plot(xPts,conPlt(:,2),'Color','k','LineWidth',2)
-    hold on
-    plot(xPts,conPlt(:,3),'r--')
-    hold on
-    plot(xyprior,yPts+stYr,'b--')
-    hold on
-    plot(xy,yPts+stYr,'Color','b')
-    hold on
-    plot(xPts,xPriorPts,'b--');
-    hold on
-    plot(xPts,xPostPts,'Color','b');
+        chain,p2_priors,yr,xNum,stYr,y,yprior,yPts,1);
     xlim([-0.15 1])
     ylim([2019 2060])
     ylabel('Year of Ice-Free Arctic')
@@ -471,20 +434,7 @@ if Fig4
     subplot(2,2,3)
     pSel=3; %Parameter being plotted
         [x,xEdges,xPts,xPrior,conPlt,xy,xyprior,xPriorPts,xPostPts]=conditionaldistvalues(pSel,...
-        chain+stYr,p3_priors+stYr,yr,xNum,stYr,y,yprior);
-       plot(xPts,conPlt(:,1),'r--')
-    hold on
-    plot(xPts,conPlt(:,2),'Color','k','LineWidth',2)
-    hold on
-    plot(xPts,conPlt(:,3),'r--')
-    hold on
-    plot(xyprior,yPts+stYr,'b--')
-    hold on
-    plot(xy,yPts+stYr,'Color','b')
-    hold on
-    plot(xPts,xPriorPts,'b--');
-    hold on
-    plot(xPts,xPostPts,'Color','b');
+        chain+stYr,p3_priors+stYr,yr,xNum,stYr,y,yprior,yPts,1);
     xlim([2004 2060])
     ylim([2019 2060])
     ylabel('Year of Ice-Free Arctic')
@@ -494,21 +444,7 @@ if Fig4
     subplot(2,2,4)
     pSel=4; %Parameter being plotted
     [x,xEdges,xPts,xPrior,conPlt,xy,xyprior,xPriorPts,xPostPts]=conditionaldistvalues(pSel,...
-           chain,p4_priors,yr,xNum,stYr,y,yprior);
-       
-   plot(xPts,conPlt(:,1),'r--')
-   hold on
-   plot(xPts,conPlt(:,2),'Color','k','LineWidth',2)
-   hold on
-   plot(xPts,conPlt(:,3),'r--')
-   hold on
-   plot(xyprior,yPts+stYr,'b--')
-   hold on
-   plot(xy,yPts+stYr,'Color','b')
-   hold on
-   plot(xPts,xPriorPts,'b--');
-   hold on
-   plot(xPts,xPostPts,'Color','b');
+           chain,p4_priors,yr,xNum,stYr,y,yprior,yPts,1);
    ylim([2019 2060])
    xlim([-9 30])
    ylabel('Year of Ice-Free Arctic')
@@ -521,7 +457,7 @@ if Fig4
 end
 
 function [x,xEdges,xPts,xPrior,conPlt,xy,xyprior,xPriorPts,xPostPts]=conditionaldistvalues(pSel,...
-    chain,priors,yr,xNum,stYr,y,yprior)
+    chain,priors,yr,xNum,stYr,y,yprior,yPts,pltFlag)
     xEdges=linspace(min(chain(:,pSel)),max(chain(:,pSel)),xNum);
     xEdges=[xEdges(1)-range(xEdges)./30 xEdges xEdges(end)+range(xEdges)./xNum];
     xPts=diff(xEdges)+xEdges(1:end-1);
@@ -541,4 +477,20 @@ function [x,xEdges,xPts,xPrior,conPlt,xy,xyprior,xPriorPts,xPostPts]=conditional
     
     xPriorPts=xPrior*(range(yr)./(0.1*max(xPrior)*max(yr)))+min(yr)+stYr-5;
     xPostPts=x*(range(yr)./(0.1*max(x)*max(yr)))+min(yr)+stYr-5;
+    
+    if pltFlag
+        plot(xPts,conPlt(:,1),'r--')
+        hold on
+        plot(xPts,conPlt(:,2),'Color','k','LineWidth',2)
+        hold on
+        plot(xPts,conPlt(:,3),'r--')
+        hold on
+        plot(xyprior,yPts+stYr,'b--')
+        hold on
+        plot(xy,yPts+stYr,'Color','b')
+        hold on
+        plot(xPts,xPriorPts,'b--');
+        hold on
+        plot(xPts,xPostPts,'Color','b');
+    end
 end
