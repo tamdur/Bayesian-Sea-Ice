@@ -62,7 +62,7 @@ Fig4=1; %Set to 1 to use actual remote sensing observations
 newPred=0; %Set to 1 to use new prediction, 0 to load past prediction
 if Fig4
     fSize=16; %Font Size
-    saveStr='SIAFig4_22_11_21';
+    saveStr='SIAFig4_22_11_22';
     load model_full_priors_22_11_14.mat %Priors to plot
 end
 if newPred
@@ -390,12 +390,17 @@ if Fig3
     saveas(gcf,['plots/' saveStr],'png');
 end
 if Fig4
-    yhat=glmtimeseries(glm,chain,tAll);
+    tRes=0.1; %Time resolution
+    tAllD=tRes:tRes:122;
+    xNum=30; %Number of bins used for each parameter, ie number of conditional distributions
+    yhat=glmtimeseries(glm,chain,tAllD);
     %Find closest year for each draw
     [~,yr]=min(abs(yhat-1),[],2);
+    yr=yr.*tRes;
     priorsAll=[p1_priors(:) p2_priors(:) p3_priors(:) p4_priors(:)];
-    yhat_all=glmtimeseries(glm,priorsAll(1:10:end,:),tAll);
+    yhat_all=glmtimeseries(glm,priorsAll(1:10:end,:),tAllD);
     [~,yr_all]=min(abs(yhat_all-1),[],2);
+    yr_all=yr_all.*tRes;
     
     ind=1;
     for ii=min(yr):max(yr)
@@ -409,152 +414,131 @@ if Fig4
     end
     
     %Start by plotting just the first parameter, the max asymptote 
-    xEdges=linspace(min(yr)-1,max(yr)+1,max(yr)-min(yr)+3); %Add an edge before an after so line varies from zero
-    xPts=diff(xEdges)+xEdges(1:end-1);
-    x=histcounts(yr,xEdges);
-    xprior=histcounts(yr_all,xEdges);
+    %Add an edge before and after so line varies from zero
+    yEdges=linspace(min(yr)-1,max(yr)+1,max(yr)-min(yr)+3); 
+    yPts=diff(yEdges)+yEdges(1:end-1);
+    y=histcounts(yr,yEdges);
+    yprior=histcounts(yr_all,yEdges);
+    
+    
     figure2('Position',[10 10 1000 1000])
     subplot(2,2,1)
     pSel=1; %Parameter being plotted
-    yEdges=linspace(min(chain(:,pSel)),max(chain(:,pSel)),30);
-    yEdges=[yEdges(1)-range(yEdges)./30 yEdges yEdges(end)+range(yEdges)./30];
-    yPts=diff(yEdges)+yEdges(1:end-1);
-    y=histcounts(chain(:,pSel),yEdges);
-    yprior=histcounts(p1_priors(:),yEdges);
-    
-    for ii=1:length(condI)
-        xYr(ii)=condI(ii).year+stYr;
-        y10(ii)=condI(ii).conRange1(1);
-        y50(ii)=condI(ii).conRange1(2);
-        y90(ii)=condI(ii).conRange1(3);
-    end
-    plot(xYr,y10,'r--')
+    [x,xEdges,xPts,xPrior,conPlt,xy,xyprior,xPriorPts,xPostPts]=conditionaldistvalues(pSel,...
+    chain,p1_priors,yr,xNum,stYr,y,yprior);
+    plot(xPts,conPlt(:,1),'r--')
     hold on
-    plot(xYr,y50,'Color','k','LineWidth',2)
+    plot(xPts,conPlt(:,2),'Color','k','LineWidth',2)
     hold on
-    plot(xYr,y90,'r--')
+    plot(xPts,conPlt(:,3),'r--')
     hold on
-    xy=x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10;
-    xyprior=xprior*(range(chain(:,pSel))./(10*max(xprior)))+min(yPts)-range(chain(:,pSel))./10;
-    plot(xPts+stYr,xyprior,'b--')
+    plot(xyprior,yPts+stYr,'b--')
     hold on
-    plot(xPts+stYr,xy,'Color','b')
+    plot(xy,yPts+stYr,'Color','b')
     hold on
-    plot(yprior*(range(yr)./(0.1*max(yprior)*max(yr)))+min(yr)+stYr-5,yPts,'b--');
+    plot(xPts,xPriorPts,'b--');
     hold on
-    plot(y*(range(yr)./(0.1*max(y)*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
-    xlim([2019 2060])
-    ylim([min(xy) 17])
-    ylabel('A_{0} [10^6 km^2]');
-    xlabel('Year of Ice-Free Arctic')
+    plot(xPts,xPostPts,'Color','b');
+    xlim([4.5 18])
+    ylim([2019 2060])
+    xlabel('A_{0} [10^6 km^2]');
+    ylabel('Year of Ice-Free Arctic')
     set(gca,'FontSize',fSize)
     
     subplot(2,2,2)
     pSel=2; %Parameter being plotted
-    yEdges=linspace(min(chain(:,pSel)),max(chain(:,pSel)),30);
-    yEdges=[yEdges(1)-range(yEdges)./30 yEdges yEdges(end)+range(yEdges)./30];
-    yPts=diff(yEdges)+yEdges(1:end-1);
-    y=histcounts(chain(:,pSel),yEdges);
-    yprior=histcounts(p2_priors(:),yEdges);
-    
-    for ii=1:length(condI)
-        xYr(ii)=condI(ii).year+stYr;
-        y10(ii)=condI(ii).conRange2(1);
-        y50(ii)=condI(ii).conRange2(2);
-        y90(ii)=condI(ii).conRange2(3);
-    end
-    plot(xYr,y10,'r--')
+    [x,xEdges,xPts,xPrior,conPlt,xy,xyprior,xPriorPts,xPostPts]=conditionaldistvalues(pSel,...
+        chain,p2_priors,yr,xNum,stYr,y,yprior);
+       plot(xPts,conPlt(:,1),'r--')
     hold on
-    plot(xYr,y50,'Color','k','LineWidth',2)
+    plot(xPts,conPlt(:,2),'Color','k','LineWidth',2)
     hold on
-    plot(xYr,y90,'r--')
+    plot(xPts,conPlt(:,3),'r--')
     hold on
-    xy=x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10;
-    xyprior=xprior*(range(chain(:,pSel))./(10*max(xprior)))+min(yPts)-range(chain(:,pSel))./10;
-    plot(xPts+stYr,xyprior,'b--')
+    plot(xyprior,yPts+stYr,'b--')
     hold on
-    plot(xPts+stYr,xy,'Color','b')
+    plot(xy,yPts+stYr,'Color','b')
     hold on
-    plot(yprior*(range(yr)./(0.1*max(yprior)*max(yr)))+min(yr)+stYr-5,yPts,'b--');
+    plot(xPts,xPriorPts,'b--');
     hold on
-    plot(y*(range(yr)./(0.1*max(y)*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
-    xlim([2019 2060])
-    ylim([min(xy) 1])
-    xlabel('Year of Ice-Free Arctic')
-    ylabel('\alpha');
+    plot(xPts,xPostPts,'Color','b');
+    xlim([-0.15 1])
+    ylim([2019 2060])
+    ylabel('Year of Ice-Free Arctic')
+    xlabel('\alpha');
     set(gca,'FontSize',fSize)
     
     subplot(2,2,3)
     pSel=3; %Parameter being plotted
-    yEdges=linspace(min(chain(:,pSel)),max(chain(:,pSel)),30);
-    yEdges=[yEdges(1)-range(yEdges)./30 yEdges yEdges(end)+range(yEdges)./30];
-    yPts=diff(yEdges)+yEdges(1:end-1)+stYr;
-    y=histcounts(chain(:,pSel)+stYr,yEdges+stYr);
-    yprior=histcounts(p3_priors(:),yEdges);
-    
-    for ii=1:length(condI)
-        xYr(ii)=condI(ii).year+stYr;
-        y10(ii)=condI(ii).conRange3(1)+stYr;
-        y50(ii)=condI(ii).conRange3(2)+stYr;
-        y90(ii)=condI(ii).conRange3(3)+stYr;
-    end
-    plot(xYr,y10,'r--')
+        [x,xEdges,xPts,xPrior,conPlt,xy,xyprior,xPriorPts,xPostPts]=conditionaldistvalues(pSel,...
+        chain+stYr,p3_priors+stYr,yr,xNum,stYr,y,yprior);
+       plot(xPts,conPlt(:,1),'r--')
     hold on
-    plot(xYr,y50,'Color','k','LineWidth',2)
+    plot(xPts,conPlt(:,2),'Color','k','LineWidth',2)
     hold on
-    plot(xYr,y90,'r--')
+    plot(xPts,conPlt(:,3),'r--')
     hold on
-    xy=x*(range(chain(:,pSel))./(10*max(x)))+min(yPts);
-    xyprior=xprior*(range(chain(:,pSel))./(10*max(xprior)))+min(yPts);
-    plot(xPts+stYr,xyprior,'b--')
+    plot(xyprior,yPts+stYr,'b--')
     hold on
-    plot(xPts+stYr,xy,'Color','b')
+    plot(xy,yPts+stYr,'Color','b')
     hold on
-    plot(yprior*(range(yr)./(0.1*max(yprior)*max(yr)))+min(yr)+stYr-5,yPts,'b--');
+    plot(xPts,xPriorPts,'b--');
     hold on
-    plot(y*(range(yr)./(0.1*max(y)*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
-    xlim([2019 2060])
-    ylim([min(xy) max(yPts)])
-    xlabel('Year of Ice-Free Arctic')
-    ylabel('t_{0} [year]');
+    plot(xPts,xPostPts,'Color','b');
+    xlim([2004 2060])
+    ylim([2019 2060])
+    ylabel('Year of Ice-Free Arctic')
+    xlabel('t_{0} [year]');
     set(gca,'FontSize',fSize)
     
     subplot(2,2,4)
     pSel=4; %Parameter being plotted
-    yEdges=linspace(min(chain(:,pSel)),max(chain(:,pSel)),30);
-    yEdges=[yEdges(1)-range(yEdges)./30 yEdges yEdges(end)+range(yEdges)./30];
-    yPts=diff(yEdges)+yEdges(1:end-1);
-    y=histcounts(chain(:,pSel),yEdges);
-    yprior=histcounts(p4_priors(:),yEdges);
-    
-    for ii=1:length(condI)
-        xYr(ii)=condI(ii).year+stYr;
-        y10(ii)=condI(ii).conRange4(1);
-        y50(ii)=condI(ii).conRange4(2);
-        y90(ii)=condI(ii).conRange4(3);
-    end
-    plot(xYr,y10,'r--')
-    hold on
-    plot(xYr,y50,'Color','k','LineWidth',2)
-    hold on
-    plot(xYr,y90,'r--')
-    hold on
-    xy=x*(range(chain(:,pSel))./(10*max(x)))+min(yPts)-range(chain(:,pSel))./10;
-    xyprior=xprior*(range(chain(:,pSel))./(10*max(xprior)))+min(yPts)-range(chain(:,pSel))./10;
-    plot(xPts+stYr,xyprior,'b--')
-    hold on
-    plot(xPts+stYr,xy,'Color','b')
-    hold on
-    plot(yprior*(range(yr)./(0.1*max(yprior)*max(yr)))+min(yr)+stYr-5,yPts,'b--');
-    hold on
-    plot(y*(range(yr)./(0.1*max(y)*max(yr)))+min(yr)+stYr-5,yPts,'Color','b');
-    xlim([2019 2060])
-    ylim([min(xy) 30])
-    xlabel('Year of Ice-Free Arctic')
-    ylabel('\nu')
-    set(gca,'FontSize',fSize)
+    [x,xEdges,xPts,xPrior,conPlt,xy,xyprior,xPriorPts,xPostPts]=conditionaldistvalues(pSel,...
+           chain,p4_priors,yr,xNum,stYr,y,yprior);
+       
+   plot(xPts,conPlt(:,1),'r--')
+   hold on
+   plot(xPts,conPlt(:,2),'Color','k','LineWidth',2)
+   hold on
+   plot(xPts,conPlt(:,3),'r--')
+   hold on
+   plot(xyprior,yPts+stYr,'b--')
+   hold on
+   plot(xy,yPts+stYr,'Color','b')
+   hold on
+   plot(xPts,xPriorPts,'b--');
+   hold on
+   plot(xPts,xPostPts,'Color','b');
+   ylim([2019 2060])
+   xlim([-9 30])
+   ylabel('Year of Ice-Free Arctic')
+   xlabel('\nu')
+   set(gca,'FontSize',fSize)
     
     % saving the figure
     saveas(gcf,['plots/' saveStr],'png');
     
+end
+
+function [x,xEdges,xPts,xPrior,conPlt,xy,xyprior,xPriorPts,xPostPts]=conditionaldistvalues(pSel,...
+    chain,priors,yr,xNum,stYr,y,yprior)
+    xEdges=linspace(min(chain(:,pSel)),max(chain(:,pSel)),xNum);
+    xEdges=[xEdges(1)-range(xEdges)./30 xEdges xEdges(end)+range(xEdges)./xNum];
+    xPts=diff(xEdges)+xEdges(1:end-1);
+    x=histcounts(chain(:,pSel),xEdges);
+    xPrior=histcounts(priors(:),xEdges);
+    
+    for ii=1:length(xEdges)-1
+        iVar=xEdges(ii)<chain(:,pSel) & chain(:,pSel)<xEdges(ii+1);
+        if sum(iVar)>100
+            conPlt(ii,:)=prctile(yr(iVar)+stYr,[10 50 90]);
+        else
+            conPlt(ii,:)=NaN(1,3);
+        end
+    end
+    xy=y*(range(chain(:,pSel))./(10*max(y)))+min(xPts)-range(chain(:,pSel))./10;
+    xyprior=yprior*(range(chain(:,pSel))./(10*max(yprior)))+min(xPts)-range(chain(:,pSel))./10;
+    
+    xPriorPts=xPrior*(range(yr)./(0.1*max(xPrior)*max(yr)))+min(yr)+stYr-5;
+    xPostPts=x*(range(yr)./(0.1*max(x)*max(yr)))+min(yr)+stYr-5;
 end
