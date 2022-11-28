@@ -16,14 +16,13 @@ if Fig1
     saveStr='SIAFig1_22_11_21';
     load model_full_priors_22_11_14.mat
 end
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Settings for plotting a single CMIP6 output run
-Fig2=0; %Set to 1 to use cmip6 output, 0 otherwise
+Fig2=1; %Set to 1 to use cmip6 output, 0 otherwise
 modelrun=19; % Set to the index of the model run used
 if Fig2
     fSize=16; %Font Size
-    saveStr='SIAFig2_22_11_21';
+    saveStr='SIAFig2_22_11_28';
     load model_predictions_22_11_14b.mat %Select set of posterior predictions to run
     load model_full_priors_22_11_14.mat
 end
@@ -58,7 +57,7 @@ else
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Settings for plot of sensitivity to parameters
-Fig4=1; %Set to 1 to use actual remote sensing observations
+Fig4=0; %Set to 1 to use actual remote sensing observations
 newPred=0; %Set to 1 to use new prediction, 0 to load past prediction
 if Fig4
     fSize=16; %Font Size
@@ -151,7 +150,7 @@ if Fig2b
         end 
     end
     glm=obsInfo.glm;
-    figure2('Position',[10 10 1200 1000])
+    figure2('Position',[10 10 1000 1000])
     for mn=1:79
         full_fit_theta=[median(p1_priors(:,mn)) median(p2_priors(:,mn)) median(p3_priors(:,mn)) median(p4_priors(:,mn))]; 
         yhat = glmtimeseries(glm,squeeze(chainAll(:,:,mn)),tAll);
@@ -188,10 +187,13 @@ if Fig2
     %Get full fit
     loglike=   @(b) sum(-1.*log(normpdf(y_full(:,modelrun)-glm(b,tAll),0,runInfo.sigObs)));
     bfit = mean(chain,1)';
-    y_fit = y_hat_full(:,modelrun);
-    siaprctpred = prctile(ypred,[7 50 93])'; %Calculate percentiles
+    full_fit_theta=[median(p1_priors(:,modelrun)) median(p2_priors(:,modelrun)) ...
+        median(p3_priors(:,modelrun)) median(p4_priors(:,modelrun))]; 
+    %y_hat_full=glmtimeseries(glm,full_fit_theta,tAll);
+    y_fit = mean(glmtimeseries(glm,full_fit_theta,tAll),1);
+    siaprctpred = prctile(ypred,[5 50 95])'; %Calculate percentiles
     % FIGURE
-    figure2('Position',[10 10 800 1000])
+    figure2('Position',[10 10 1200 1000])
     subplot(2,4,(5:8))
     %Shade the 95% CI prediction of logistic
     shade(tAll(42:end)+stYr,siaprctpred(42:end,1),tAll(42:end)+stYr,siaprctpred(42:end,3),'color',rgb('LightPink'),'FillType',[2 1]);
@@ -218,7 +220,7 @@ if Fig2
     % setting number of bins for histogram so less dense and colour actually
     % shows up
     nbins_pr=50;
-    nbins_po=20;
+    nbins_po=50;
     h1 = histogram(p1_priors,'FaceColor',rgb('Grey'));%priors
     h1.NumBins= nbins_pr;
     h1.Normalization = 'pdf';
@@ -245,7 +247,7 @@ if Fig2
     title('(b)');
     ax = gca;
     ax.TitleHorizontalAlignment = 'left';
-    xlim([0 0.5])
+    xlim([0 2])
     ylabel('distribution');
     xlabel('alpha [units]');
     
@@ -261,7 +263,7 @@ if Fig2
     title('(c)');
     ax = gca;
     ax.TitleHorizontalAlignment = 'left';
-    xlim([1950 2060])
+    xlim([1970 2080])
     ylabel('distribution');
     xlabel('t_{0} [year]');
     
@@ -278,7 +280,7 @@ if Fig2
     title('(d)');
     ax = gca;
     ax.TitleHorizontalAlignment = 'left';
-    xlim([0 10])
+    xlim([0 50])
     ylabel('distribution');
     xlabel('\nu [unitless]');
 
