@@ -18,7 +18,7 @@ if Fig1
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Settings for plotting a single CMIP6 output run
-Fig2=1; %Set to 1 to use cmip6 output, 0 otherwise
+Fig2=0; %Set to 1 to use cmip6 output, 0 otherwise
 modelrun=19; % Set to the index of the model run used
 if Fig2
     fSize=16; %Font Size
@@ -57,8 +57,8 @@ else
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Settings for plot of sensitivity to parameters
-Fig4=0; %Set to 1 to use actual remote sensing observations
-newPred=0; %Set to 1 to use new prediction, 0 to load past prediction
+Fig4=0; 
+newPred=0;
 if Fig4
     fSize=16; %Font Size
     saveStr='SIAFig4_22_11_22';
@@ -74,6 +74,15 @@ else
     glm=obsInfo.glm;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Supplementary plot of date of no sea ice versus starting SIA for CMIP6
+SIAVsIceFree=1; % Set to 1 to plot date of no sea ice versus starting SIA
+if SIAVsIceFree
+    fSize=16; %Font Size
+    saveStr='SIAVsIceFree_23_01_17';
+    load model_full_priors_22_11_14.mat
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Prepare data to be plotted
 yrObs=(1:42)'; %Years of observations to be used
@@ -81,8 +90,8 @@ t = yrObs;
 tAll = (1:122)';
 stYr=1978;
 
-%Script for Fig. 1
 if Fig1
+    %Script for Fig. 1
     load sia_obs.mat;
     load A20.mat;
     
@@ -396,7 +405,7 @@ if Fig4
     tAllD=tRes:tRes:122;
     xNum=30; %Number of bins used for each parameter, ie number of conditional distributions
     yhat=glmtimeseries(glm,chain,tAllD);
-    %Find closest year for each draw
+    %Find closest year of ice-free date for each draw
     [~,yr]=min(abs(yhat-1),[],2);
     yr=yr.*tRes;
     priorsAll=[p1_priors(:) p2_priors(:) p3_priors(:) p4_priors(:)];
@@ -456,6 +465,49 @@ if Fig4
     % saving the figure
     saveas(gcf,['plots/' saveStr],'png');
     
+end
+if SIAVsIceFree
+    %Load CMIP6 observations
+    load sia_obs.mat;
+    load A20.mat;
+    
+    y_obs = squeeze(sum(sia_obs, [1 2],'omitnan')./1e6);
+    ct = 1;
+    for ct_mod = 1:20
+        for ct_em = 1:size(A20(ct_mod).X,2)
+            y(:,ct) = A20(ct_mod).X(1:42,ct_em);
+            y2(:,ct) = A20(ct_mod).X(:,ct_em);
+            ct = ct+1;
+        end
+    end
+    
+    %Get the average sea ice for 1980-2000 for each model simulation
+    baselineI=find(tAll+stYr>=1980 & tAll+stYr<=2000);
+    baselineSIA=mean(y2(baselineI,:),1);
+    
+    %Next, get the year at which the long-term trend drops below the no
+    %sea-ice threshold
+    tRes=0.1; %Time resolution
+    tAllD=tRes:tRes:122;
+    xNum=30; %Number of bins used for each parameter, ie number of conditional distributions\
+     glm=runInfo.glm; %The functional form used by the MCMC model
+    for ct_79 = 1:79
+        %Get full fit
+        mle=[mean(p1_priors(:,ct_79)) mean(p2_priors(:,ct_79)) mean(p3_priors(:,ct_79)) mean(p4_priors(:,ct_79))];
+        yhat(:,ct_79) = glm(mle,tAllD);
+    end
+    %Find closest year of ice-free date for each draw
+    [~,yr]=min(abs(yhat-1),[],1);
+    yr=yr.*tRes;
+
+    %Then, plot the relationship between the two
+    figure2('Position',[10 10 600 500])
+    plot(baselineSIA,yr+stYr,'.')
+    xlabel('1980-2000 mean SIA (millions km^{2})')
+    ylabel('Ice-Free year')
+    text(2.5,2065,strcat("r^{2}=",num2str(corr(yr',baselineSIA').^2,'%.2f')),'FontSize',fSize)
+    set(gca,'FontSize',fSize)
+    saveas(gcf,['plots/' saveStr],'png');
 end
 
 function [x,xEdges,xPts,xPrior,conPlt,xy,xyprior,xPriorPts,xPostPts]=conditionaldistvalues(pSel,...
